@@ -47,7 +47,7 @@ namespace rogueLike
                     arrow.Move();
                     arrow.LastMovedFrame = (int)FrameCount;
                 }
-                TryToHit(arrow.Position, arrow.GetSymbol());
+                TryToHit(arrow.Position);
             }
 
             if (arrows is not null)
@@ -134,7 +134,7 @@ namespace rogueLike
             }
         }
 
-        public void HandleAttackInput(Player currentPlayer, ConsoleKey key)
+        public Vector2 HandleAttackInput(Player currentPlayer, ConsoleKey key)
         {
             Vector2 attackPos = Vector2.Zero;
             if (FrameCount - currentPlayer.lastActionFrame > currentPlayer.AttackCooldown)
@@ -155,8 +155,9 @@ namespace rogueLike
                         break;
                 }
                 currentPlayer.lastActionFrame = (int)FrameCount;
-                TryToHit(attackPos, '*');
+                TryToHit(attackPos);
             }
+            return attackPos;
         }
 
         public void HandleEnemyAction(Zombie[] zombs, Archer[] archs)
@@ -273,17 +274,14 @@ namespace rogueLike
 
                 enemy.lastActionFrame = (int)FrameCount;
                 if (attackPos != Vector2.Zero)
-                    TryToHit(attackPos, '*');
+                    TryToHit(attackPos);
             }
         }
 
-        public void TryToHit(Vector2 attackPos, Char hitSymbol)
+        public void TryToHit(Vector2 attackPos)
         {
             GameObject objectAt = myWorld.GetGameObjectGrid()[(int)attackPos.X, (int)attackPos.Y];
             Creature attackedObj = objectAt as Creature;
-
-            if (attackPos != Vector2.Zero)
-                
 
             if (attackedObj != null)
             {
@@ -291,7 +289,7 @@ namespace rogueLike
             }
             else
             {
-                    Console.WriteLine("Вы ударили мимо");
+                Console.WriteLine("Вы ударили мимо");
             }
         }
 
