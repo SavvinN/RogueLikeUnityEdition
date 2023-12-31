@@ -6,7 +6,7 @@ namespace rogueLike.GameObjects.Enemys
     {
         public Archer(Vector2 spawnPos) : base(spawnPos)
         {
-            attackCooldown = 80;
+            attackCooldown = 130;
             SetPos(spawnPos);
             SetSymbol('A');
             SetViewDistance(8);

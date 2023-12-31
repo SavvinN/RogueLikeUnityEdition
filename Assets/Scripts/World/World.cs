@@ -102,13 +102,13 @@ namespace rogueLike
         }
         internal void SetObject(Vector2 pos, GameObject obj)
         {
-            int x = (int)pos.Y;
-            int y = (int)pos.X;
+            int x = pos.Y;
+            int y = pos.X;
             _gameObjectsGrid[y, x] = obj;
             _gameObjectsGrid[y, x].SetPos(new Vector2(y, x));
         }
 
-        internal GameObject GetObjectAt(Vector2 pos) => _gameObjGridCopy[(int)pos.X, (int)pos.Y];
+        internal GameObject GetObjectAt(Vector2 pos) => _gameObjGridCopy[pos.X, pos.Y];
         private void CreateExitDoor()
         {
             int random = rnd.Next(2, Cols - 2);
@@ -123,16 +123,16 @@ namespace rogueLike
             if(_enemySpawnMap.Count != 0)
             {
                 zombie = new Zombie[enemyCount];
-                archer = new Archer[enemyCount/2];
+                archer = new Archer[enemyCount];
                 for (int i = 0; i < zombie.Length; i++)
                 {
                     zombie[i] = new Zombie(_enemySpawnMap[rnd.Next(0, _enemySpawnMap.Count - 1)]);
-                    _gameObjectsGrid[(int)zombie[i].GetPos().X, (int)zombie[i].GetPos().Y] = zombie[i];
+                    _gameObjectsGrid[zombie[i].GetPos().X, zombie[i].GetPos().Y] = zombie[i];
                 }
                 for (int i = 0; i < archer.Length; i++)
                 {
                     archer[i] = new Archer(_enemySpawnMap[rnd.Next(0, _enemySpawnMap.Count - 1)]);
-                    _gameObjectsGrid[(int)archer[i].GetPos().X, (int)archer[i].GetPos().Y] = archer[i];
+                    _gameObjectsGrid[archer[i].GetPos().X, archer[i].GetPos().Y] = archer[i];
                 }
             }
         }
@@ -152,7 +152,7 @@ namespace rogueLike
                        : new Player(new Vector2(1, Cols - 2));
             }
 
-            SetObject((int)player.Position.X, (int)player.Position.Y, player);
+            SetObject(player.Position.X, player.Position.Y, player);
         }
 
         public List<Vector2> GenerateItemSpawnMap()
@@ -226,9 +226,9 @@ namespace rogueLike
         }
 
         internal static bool CompareObjects(GameObject obj1, GameObject obj2) => obj1.GetType().Equals(obj2.GetType());
-        public bool IsPosWalkable(Vector2 pos) => _gameObjectsGrid[(int)pos.X, (int)pos.Y].IsWalkable;
-        internal GameObject GetElementAt(Vector2 Pos) => _gameObjGridCopy[(int)Pos.X, (int)Pos.Y];
-        internal GameObject GetObject(Vector2 pos) => _gameObjectsGrid[(int)pos.X, (int)pos.Y];
+        public bool IsPosWalkable(Vector2 pos) => _gameObjectsGrid[pos.X, pos.Y].IsWalkable;
+        internal GameObject GetElementAt(Vector2 Pos) => _gameObjGridCopy[Pos.X, Pos.Y];
+        internal GameObject GetObject(Vector2 pos) => _gameObjectsGrid[pos.X, pos.Y];
         internal List<Creature> GetAllCreatures()
         {
             var list = new List<Creature>();
@@ -237,7 +237,7 @@ namespace rogueLike
             {
                 list.Add(z);
             }
-            foreach (var a in zombie)
+            foreach (var a in archer)
             {
                 list.Add(a);
             }

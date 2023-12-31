@@ -10,7 +10,6 @@ namespace rogueLike.GameObjects
         {
             moveCooldown = base.moveCooldown / 2;
             attackCooldown = base.attackCooldown / 2;
-
             Walkable = false;
             SetPos(pos);
             SetSymbol(mainSymbol);

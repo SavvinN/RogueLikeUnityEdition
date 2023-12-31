@@ -6,15 +6,16 @@ namespace rogueLike.GameObjects
 {
     public class Creature : GameObject
     {
-        protected int moveCooldown = 20;
+        protected int moveCooldown = 30;
         protected int attackCooldown = 30;
+        public int LastMovedFrame = 0;
+        public int LastAttackFrame = 0;
 
         public int MoveCooldown { get => moveCooldown; }
         public int AttackCooldown { get => attackCooldown; }
-        public int lastActionFrame { get; set; }
+
         public Creature()
         {
-            lastActionFrame = 0;
             SetSymbol('?');
             Walkable = false;
         }

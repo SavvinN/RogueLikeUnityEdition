@@ -61,14 +61,7 @@ public class UnityManager : MonoBehaviour
         var arrows = currentGame.MyWorld.GetAllArrows();
 
         currentGame.HandleEnemyAction(zombies, archers);
-        currentGame.HandleMoveInput(currentPlayer, CatchInput());
 
-        var hitPos = currentGame.HandleAttackInput(currentPlayer, CatchInput());
-        if (hitPos != System.Numerics.Vector2.Zero)
-        {
-            HitParticle.transform.position = new Vector3(hitPos.X, _entityHeight , hitPos.Y);
-            HitParticle.Play(true);
-        }
         
         currentGame.HandleArrowsAction();
 
@@ -128,7 +121,7 @@ public class UnityManager : MonoBehaviour
 
     public void TryToDestroyEntity(UnityEngine.GameObject unityObj, rogueLike.GameObjects.GameObject gameObj)
     {
-        if (gameObj.Position == System.Numerics.Vector2.Zero)
+        if (gameObj.Position == rogueLike.Vector2.Zero)
             unityObj.SetActive(false);
     }
 
@@ -206,50 +199,4 @@ public class UnityManager : MonoBehaviour
         }
     }
 
-    ConsoleKey CatchInput()
-    {
-        ConsoleKey moveKey = ConsoleKey.Spacebar;
-
-        if (Input.GetKey(KeyCode.UpArrow))
-        {
-            moveKey = ConsoleKey.UpArrow;
-        }
-        else
-        if (Input.GetKey(KeyCode.DownArrow))
-        {
-            moveKey = ConsoleKey.DownArrow;
-        }
-        else
-        if (Input.GetKey(KeyCode.RightArrow))
-        {
-            moveKey = ConsoleKey.RightArrow;
-        }
-        else
-        if (Input.GetKey(KeyCode.LeftArrow))
-        {
-            moveKey = ConsoleKey.LeftArrow;
-        }
-        else
-            if (Input.GetKey(KeyCode.W))
-        {
-            moveKey = ConsoleKey.W;
-        }
-        else
-        if (Input.GetKey(KeyCode.S))
-        {
-            moveKey = ConsoleKey.S;
-        }
-        else
-        if (Input.GetKey(KeyCode.D))
-        {
-            moveKey = ConsoleKey.D;
-        }
-        else
-        if (Input.GetKey(KeyCode.A))
-        {
-            moveKey = ConsoleKey.A;
-        }
-
-        return moveKey;
-    }
 }

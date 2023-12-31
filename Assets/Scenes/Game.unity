@@ -149,14 +149,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 71436050}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e3e0699dabbbefc4ab12c75826d2487a, type: 3}
+  m_Script: {fileID: 11500000, guid: 0bfec32d93a887646933d3bd5d6a2b94, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _playerVelocity: 10
-  _enemyVelocity: 5.5
-  _cameraVelociy: 15
-  _arrowVelocity: 8
-  _cameraHeight: 14
+  _playerVelocity: 8
+  _enemyVelocity: 4
+  _cameraVelociy: 20
+  _arrowVelocity: 9
+  _cameraHeight: 20
   World: {fileID: 494060950}
   Camera: {fileID: 153295763}
   LifeCountText: {fileID: 1460155357}
