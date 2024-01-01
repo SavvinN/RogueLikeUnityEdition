@@ -42,17 +42,21 @@ public class UnityManager : MonoBehaviour
     public UnityEngine.GameObject Arrow;
     public ParticleSystem HitParticle;
 
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
         currentGame = new Game();
+    }
+
+    void Start()
+    {
+        PlayerController.myGame = currentGame;
         _arrows = new List<UnityEngine.GameObject>();
         _currentPlayer = Instantiate(Player);
         HitParticle = Instantiate(HitParticle);
+        PlayerController._attackParticle = HitParticle;
         UpdateWorld();
     }
 
-    // Update is called once per frame
     void Update()
     {
         var currentPlayer = currentGame.MyWorld.GetPlayer();
@@ -61,8 +65,7 @@ public class UnityManager : MonoBehaviour
         var arrows = currentGame.MyWorld.GetAllArrows();
 
         currentGame.HandleEnemyAction(zombies, archers);
-
-        
+       
         currentGame.HandleArrowsAction();
 
         UpdateEntityAction(currentPlayer, zombies, archers, arrows);

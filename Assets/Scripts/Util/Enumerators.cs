@@ -1,7 +1,7 @@
 ﻿
 namespace rogueLike
 {
-    enum Direction : byte
+    public enum Direction : byte
     {
         Up = 0,
         Left = 1,

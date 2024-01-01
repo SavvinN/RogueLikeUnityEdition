@@ -6,7 +6,7 @@ using static System.Console;
 
 namespace rogueLike
 {
-    internal class Game
+    public class Game
     {
         System.Numerics.Vector2 position;
         

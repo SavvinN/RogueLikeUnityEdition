@@ -1,3 +1,5 @@
+using rogueLike;
+using rogueLike.GameObjects;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,65 +9,69 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     InputController _playerControl;
+    public static ParticleSystem _attackParticle;
+    public static Game myGame;
 
     void Awake()
     {
         _playerControl = new InputController();
         OnEnable();
 
-        _playerControl.AttackMap.Up.performed += OnAttackUp();
-        _playerControl.AttackMap.Down.performed += OnAttackDown();
-        _playerControl.AttackMap.Left.performed += OnAttackRight();
-        _playerControl.AttackMap.Right.performed += OnAttackLeft();
-
-        _playerControl.MoveMap.Up.performed += MoveUp();
-        _playerControl.MoveMap.Down.performed += MoveDown();
-        _playerControl.MoveMap.Left.performed += MoveLeft();
-        _playerControl.MoveMap.Right.performed += MoveRight();
+        _playerControl.AttackMap.Up.performed += context => OnAttackUp();
+        _playerControl.AttackMap.Down.performed += context => OnAttackDown();
+        _playerControl.AttackMap.Left.performed += context => OnAttackRight();
+        _playerControl.AttackMap.Right.performed += context => OnAttackLeft();
     }
 
-    private Action<InputAction.CallbackContext> MoveRight()
+    private void Update()
     {
-        throw new NotImplementedException();
+        var Direction = _playerControl.MoveMap.Move.ReadValue<UnityEngine.Vector2>();
+
+        if (Direction == UnityEngine.Vector2.up)
+            myGame.HandleMoveInput(myGame.MyWorld.GetPlayer(), ConsoleKey.UpArrow);
+        if (Direction == UnityEngine.Vector2.down)
+            myGame.HandleMoveInput(myGame.MyWorld.GetPlayer(), ConsoleKey.DownArrow);
+        if (Direction == UnityEngine.Vector2.left)
+            myGame.HandleMoveInput(myGame.MyWorld.GetPlayer(), ConsoleKey.LeftArrow);
+        if (Direction == UnityEngine.Vector2.right)
+            myGame.HandleMoveInput(myGame.MyWorld.GetPlayer(), ConsoleKey.RightArrow);
     }
 
-    private Action<InputAction.CallbackContext> MoveLeft()
+    private void OnAttackLeft()
     {
-        throw new NotImplementedException();
+        var pos  = myGame.HandleAttackInput(myGame.MyWorld.GetPlayer(), ConsoleKey.D);
+        _attackParticle.transform.position = new Vector3(pos.X, 0, pos.Y);
+        _attackParticle.Play();
     }
 
-    private Action<InputAction.CallbackContext> MoveDown()
+    private void OnAttackRight()
     {
-        throw new NotImplementedException();
+        var pos = myGame.HandleAttackInput(myGame.MyWorld.GetPlayer(), ConsoleKey.A);
+        _attackParticle.transform.position = new Vector3(pos.X, 0, pos.Y);
+        _attackParticle.Play();
     }
 
-    private Action<InputAction.CallbackContext> MoveUp()
+    private void OnAttackDown()
     {
-        throw new NotImplementedException();
+        var pos = myGame.HandleAttackInput(myGame.MyWorld.GetPlayer(), ConsoleKey.S);
+        _attackParticle.transform.position = new Vector3(pos.X, 0, pos.Y);
+        _attackParticle.Play();
     }
 
-    private Action<InputAction.CallbackContext> OnAttackLeft()
+    private void OnAttackUp()
     {
-        throw new NotImplementedException();
-    }
-
-    private Action<InputAction.CallbackContext> OnAttackRight()
-    {
-        throw new NotImplementedException();
-    }
-
-    private Action<InputAction.CallbackContext> OnAttackDown()
-    {
-        throw new NotImplementedException();
-    }
-
-    private Action<InputAction.CallbackContext> OnAttackUp()
-    {
-        throw new NotImplementedException();
+        var pos = myGame.HandleAttackInput(myGame.MyWorld.GetPlayer(), ConsoleKey.W);
+        _attackParticle.transform.position = new Vector3(pos.X, 0, pos.Y);
+        _attackParticle.Play();
     }
 
     private void OnEnable()
     {
         _playerControl.Enable();
+    }
+
+    private void OnDisable()
+    {
+        _playerControl.Disable();
     }
 }
