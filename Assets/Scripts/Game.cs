@@ -12,40 +12,40 @@ namespace rogueLike
         
         public int  level = 1,
                     life = 3;
-        public float FrameCount = 0;
+        public float frameCount = 0;
         private World myWorld;
         public bool GameStatus { get; set; }
-        public World MyWorld { get { return myWorld; } }
+        public World MyWorld { get => myWorld; }
         public Game()
         {
             myWorld = new World(level);
+            GameStatus = true;
         }
 
         public void Start()
         {
-            GameStatus = true;
+            
         }
 
         public void HandleEntityAction()
         {
+            HandleArrowsAction();
             HandlePlayerInput(myWorld.GetPlayer());
             HandleEnemyAction(myWorld.GetZombies(), myWorld.GetArchers());
-            HandleArrowsAction();
         }
 
         public void HandleArrowsAction()
         {
             var arrows = myWorld.GetAllArrows();
 
-
             foreach (var arrow in arrows)
             {
-                if (arrow.Position != Vector2.Zero && FrameCount - arrow.LastMovedFrame > arrow.velocity)
+                if (arrow.Position != Vector2.Zero && frameCount - arrow.LastMovedFrame > arrow.velocity)
                 {
                     arrow.Move();
-                    arrow.LastMovedFrame = (int)FrameCount;
+                    arrow.LastMovedFrame = (int)frameCount;
                 }
-                TryToHit(arrow.Position, myWorld.GetPlayer());
+                TryToHit(arrow.Position, myWorld ,myWorld.GetPlayer());
             }
 
             if (arrows is not null)
@@ -68,9 +68,11 @@ namespace rogueLike
         {
             GameObject elementAtPlayerPos = myWorld.GetElementAt(myWorld.GetPlayer().GetPos());
 
-            if(life < 0)
-                level = 1;
-
+            if(life <= 0)
+            {
+                GameStatus = false;
+            }
+                
             if (myWorld.GetPlayer().Position == Vector2.Zero)
             {
                 RegenerateLevel();
@@ -100,14 +102,16 @@ namespace rogueLike
             {
                 ConsoleKeyInfo keyInfo = ReadKey(true);
                 ConsoleKey key = keyInfo.Key;
-                HandleMoveInput(currentPlayer, key);
-                HandleAttackInput(currentPlayer, key);
+                HandleMoveInput(key);
+                HandleAttackInput(key);
             }
         }
 
-        public void HandleMoveInput(Player currentPlayer, ConsoleKey key)
+        public void HandleMoveInput(ConsoleKey key)
         {
-            if (FrameCount - currentPlayer.LastMovedFrame > currentPlayer.MoveCooldown)
+            var currentPlayer = myWorld.GetPlayer();
+
+            if (frameCount - currentPlayer.LastMovedFrame > currentPlayer.MoveCooldown)
             {
                 var temp = currentPlayer.Position;
 
@@ -128,14 +132,16 @@ namespace rogueLike
                 }
 
                 if (temp != currentPlayer.Position)
-                    currentPlayer.LastMovedFrame = (int)FrameCount;
+                    currentPlayer.LastMovedFrame = (int)frameCount;
             }
         }
 
-        public Vector2 HandleAttackInput(Player currentPlayer, ConsoleKey key)
+        public Vector2 HandleAttackInput(ConsoleKey key)
         {
+            var currentPlayer = myWorld.GetPlayer();
             Vector2 attackPos = Vector2.Zero;
-            if (FrameCount - currentPlayer.LastAttackFrame > currentPlayer.AttackCooldown)
+
+            if (frameCount - currentPlayer.LastAttackFrame > currentPlayer.AttackCooldown)
             {
                 switch (key)
                 {
@@ -153,10 +159,10 @@ namespace rogueLike
                         break;
                 }
 
-                currentPlayer.LastAttackFrame = (int)FrameCount;
-                foreach(var enemy in myWorld.GetAllCreatures())
+                currentPlayer.LastAttackFrame = (int)frameCount;
+                foreach (var enemy in myWorld.GetAllCreatures())
                 {
-                    TryToHit(attackPos, enemy);
+                    Game.TryToHit(attackPos, myWorld, enemy);
                 }
             }
             return attackPos;
@@ -169,7 +175,6 @@ namespace rogueLike
                 zombie.FindPlayer(myWorld.GetPlayer().Position, myWorld.GetGameObjectGrid());
                 EnemyMovement(zombie);
                 MeleeEnemyAttackment(zombie);
-                
             }
 
             foreach (var archer in archs)
@@ -207,7 +212,7 @@ namespace rogueLike
         {
             var direct = EnemyObsPlayer(enemy);
 
-            if (FrameCount - enemy.LastMovedFrame > enemy.MoveCooldown && direct != Direction.None)
+            if (frameCount - enemy.LastMovedFrame > enemy.MoveCooldown && direct != Direction.None)
             {
                 var temp = enemy.Position;
                 switch (direct)
@@ -224,10 +229,13 @@ namespace rogueLike
                     case Direction.Up:
                         enemy.Move(direct, myWorld);
                         break;
+                    case Direction.None:
+                        enemy.Patrol(myWorld); 
+                        break;
                 }
 
                 if (temp != enemy.Position)
-                    enemy.LastMovedFrame = (int)FrameCount;
+                    enemy.LastMovedFrame = (int)frameCount;
             }
         }
 
@@ -235,7 +243,7 @@ namespace rogueLike
         {
             var direct = Direction.None;
             var playerPos = myWorld.GetPlayer().Position;
-
+            
             if(archer.Position.X > playerPos.X && archer.Position.Y == playerPos.Y)
                 direct = Direction.Up;
             else
@@ -248,11 +256,11 @@ namespace rogueLike
             if (archer.Position.Y > playerPos.Y && archer.Position.X == playerPos.X)
                 direct = Direction.Left;
 
-            if (FrameCount - archer.LastAttackFrame > archer.AttackCooldown && direct != Direction.None)
+            if (frameCount - archer.LastAttackFrame > archer.AttackCooldown && direct != Direction.None)
             {
                 var Arrow = new Arrow(archer.GetPos(), direct, myWorld.GetGameObjectGrid());
                 myWorld.AddArrow(Arrow);
-                archer.LastAttackFrame = (int)FrameCount;
+                archer.LastAttackFrame = (int)frameCount;
             }
         }
 
@@ -260,7 +268,7 @@ namespace rogueLike
         {
             var playerPos = myWorld.GetPlayer().Position;
             var attackPos = Vector2.Zero;
-            if (FrameCount - enemy.LastMovedFrame > enemy.AttackCooldown)
+            if (frameCount - enemy.LastMovedFrame > enemy.AttackCooldown)
             {
                 if (enemy.Position + Vector2.UnitX == playerPos)
                     attackPos = enemy.Attack(Direction.Down, myWorld.GetGameObjectGrid());
@@ -274,13 +282,13 @@ namespace rogueLike
                 if (enemy.Position - Vector2.UnitY == playerPos)
                     attackPos = enemy.Attack(Direction.Left, myWorld.GetGameObjectGrid());
 
-                enemy.LastMovedFrame = (int)FrameCount;
+                enemy.LastMovedFrame = (int)frameCount;
                 if (attackPos != Vector2.Zero)
-                    TryToHit(attackPos, myWorld.GetPlayer());
+                    TryToHit(attackPos, myWorld, myWorld.GetPlayer());
             }
         }
 
-        public void TryToHit(Vector2 attackPos, Creature creature)
+        public static void TryToHit(Vector2 attackPos, World myWorld, Creature creature)
         {
             GameObject objectAt = myWorld.GetGameObjectGrid()[attackPos.X, attackPos.Y];
             Creature attackedObj = objectAt as Creature;

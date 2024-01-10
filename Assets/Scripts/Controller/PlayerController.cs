@@ -10,7 +10,7 @@ public class PlayerController : MonoBehaviour
 {
     InputController _playerControl;
     public static ParticleSystem _attackParticle;
-    public static Game myGame;
+    public static Game _myGame;
 
     void Awake()
     {
@@ -28,41 +28,37 @@ public class PlayerController : MonoBehaviour
         var Direction = _playerControl.MoveMap.Move.ReadValue<UnityEngine.Vector2>();
 
         if (Direction == UnityEngine.Vector2.up)
-            myGame.HandleMoveInput(myGame.MyWorld.GetPlayer(), ConsoleKey.UpArrow);
+            _myGame.HandleMoveInput(ConsoleKey.UpArrow);
         if (Direction == UnityEngine.Vector2.down)
-            myGame.HandleMoveInput(myGame.MyWorld.GetPlayer(), ConsoleKey.DownArrow);
+            _myGame.HandleMoveInput(ConsoleKey.DownArrow);
         if (Direction == UnityEngine.Vector2.left)
-            myGame.HandleMoveInput(myGame.MyWorld.GetPlayer(), ConsoleKey.LeftArrow);
+            _myGame.HandleMoveInput(ConsoleKey.LeftArrow);
         if (Direction == UnityEngine.Vector2.right)
-            myGame.HandleMoveInput(myGame.MyWorld.GetPlayer(), ConsoleKey.RightArrow);
+            _myGame.HandleMoveInput(ConsoleKey.RightArrow);
     }
 
     private void OnAttackLeft()
     {
-        var pos  = myGame.HandleAttackInput(myGame.MyWorld.GetPlayer(), ConsoleKey.D);
-        _attackParticle.transform.position = new Vector3(pos.X, 0, pos.Y);
-        _attackParticle.Play();
+        var pos  = _myGame.HandleAttackInput(ConsoleKey.D);
+        TryPlayParticle(pos);
     }
 
     private void OnAttackRight()
     {
-        var pos = myGame.HandleAttackInput(myGame.MyWorld.GetPlayer(), ConsoleKey.A);
-        _attackParticle.transform.position = new Vector3(pos.X, 0, pos.Y);
-        _attackParticle.Play();
+        var pos = _myGame.HandleAttackInput(ConsoleKey.A);
+        TryPlayParticle(pos);
     }
 
     private void OnAttackDown()
     {
-        var pos = myGame.HandleAttackInput(myGame.MyWorld.GetPlayer(), ConsoleKey.S);
-        _attackParticle.transform.position = new Vector3(pos.X, 0, pos.Y);
-        _attackParticle.Play();
+        var pos = _myGame.HandleAttackInput(ConsoleKey.S);
+        TryPlayParticle(pos);
     }
 
     private void OnAttackUp()
     {
-        var pos = myGame.HandleAttackInput(myGame.MyWorld.GetPlayer(), ConsoleKey.W);
-        _attackParticle.transform.position = new Vector3(pos.X, 0, pos.Y);
-        _attackParticle.Play();
+        var pos = _myGame.HandleAttackInput(ConsoleKey.W);
+        TryPlayParticle(pos);
     }
 
     private void OnEnable()
@@ -73,5 +69,14 @@ public class PlayerController : MonoBehaviour
     private void OnDisable()
     {
         _playerControl.Disable();
+    }
+
+    private void TryPlayParticle(rogueLike.Vector2 pos)
+    {
+        if(pos != rogueLike.Vector2.Zero)
+        {
+            _attackParticle.transform.position = new Vector3(pos.X, 0, pos.Y);
+            _attackParticle.Play();
+        }
     }
 }

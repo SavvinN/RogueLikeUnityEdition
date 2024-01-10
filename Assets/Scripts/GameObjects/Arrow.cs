@@ -9,7 +9,7 @@ namespace rogueLike.GameObjects
         private Direction _direction;
         private int _distance = 5;
         public int LastMovedFrame = 0;
-        public int velocity = 15;
+        public int velocity = 30;
         public GameObject[,] _grid;
         internal Arrow(Vector2 pos, Direction direction, GameObject[,] grid)
         {
@@ -40,7 +40,8 @@ namespace rogueLike.GameObjects
                     break;
             }
 
-            if (_grid[(int)movingPos.X, (int)movingPos.Y].GetType() != new Wall().GetType() && !(_distance < 0))
+            if (_grid[(int)movingPos.X, (int)movingPos.Y].GetType() != new Wall().GetType() 
+                && !(_distance < 0))
             {
                 SetPos(movingPos);
                 _distance--;

@@ -39,7 +39,7 @@ namespace rogueLike
         public void GenerateMaze(int level)
         {
             _level = level;
-            enemyCount = (_level / 2) + _level;
+            enemyCount = _level;
             SetWorldSize();
             maze = new Maze(sizeY,
                             sizeX,
@@ -123,7 +123,7 @@ namespace rogueLike
             if(_enemySpawnMap.Count != 0)
             {
                 zombie = new Zombie[enemyCount];
-                archer = new Archer[enemyCount];
+                archer = new Archer[zombie.Length - enemyCount / 2];
                 for (int i = 0; i < zombie.Length; i++)
                 {
                     zombie[i] = new Zombie(_enemySpawnMap[rnd.Next(0, _enemySpawnMap.Count - 1)]);

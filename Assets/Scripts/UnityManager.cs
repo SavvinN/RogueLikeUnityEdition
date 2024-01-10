@@ -30,7 +30,7 @@ public class UnityManager : MonoBehaviour
     public UnityEngine.GameObject Camera;
     public TextMeshProUGUI LifeCountText;
     public TextMeshProUGUI LevelCountText;
-    public TextMeshProUGUI YouDiedText;
+    public Canvas GameOverCanvas;
 
     [Space]
     [Header("Префабы")]
@@ -49,7 +49,7 @@ public class UnityManager : MonoBehaviour
 
     void Start()
     {
-        PlayerController.myGame = currentGame;
+        PlayerController._myGame = currentGame;
         _arrows = new List<UnityEngine.GameObject>();
         _currentPlayer = Instantiate(Player);
         HitParticle = Instantiate(HitParticle);
@@ -59,26 +59,35 @@ public class UnityManager : MonoBehaviour
 
     void Update()
     {
-        var currentPlayer = currentGame.MyWorld.GetPlayer();
-        var zombies = currentGame.MyWorld.GetZombies();
-        var archers = currentGame.MyWorld.GetArchers();
-        var arrows = currentGame.MyWorld.GetAllArrows();
+        if (currentGame.GameStatus == true)
+        {
+            var currentPlayer = currentGame.MyWorld.GetPlayer();
+            var zombies = currentGame.MyWorld.GetZombies();
+            var archers = currentGame.MyWorld.GetArchers();
+            var arrows = currentGame.MyWorld.GetAllArrows();
 
-        currentGame.HandleEnemyAction(zombies, archers);
-       
-        currentGame.HandleArrowsAction();
+            currentGame.HandleEnemyAction(zombies, archers);
 
-        UpdateEntityAction(currentPlayer, zombies, archers, arrows);
+            currentGame.HandleArrowsAction();
 
-        DestroyEnemyPrefabs(_zombies, zombies);
-        DestroyEnemyPrefabs(_archers, archers);
+            UpdateEntityAction(currentPlayer, zombies, archers, arrows);
 
-        currentGame.FrameCount += Time.deltaTime * 100;
+            DestroyEnemyPrefabs(_zombies, zombies);
+            DestroyEnemyPrefabs(_archers, archers);
 
-        if(currentGame.IsGoal())
+            currentGame.frameCount += Time.deltaTime * 100;
+
+            if (currentGame.IsGoal())
+            {
+                DestroyWorld();
+                UpdateWorld();
+            }
+        }
+        else
         {
             DestroyWorld();
-            UpdateWorld();
+            Destroy(_currentPlayer);
+            GameOverCanvas.gameObject.SetActive(true);
         }
     }
 
@@ -92,6 +101,7 @@ public class UnityManager : MonoBehaviour
 
     public void UpdateWorld()
     {
+
         LifeCountText.text = "Life " + currentGame.life.ToString();
         LevelCountText.text = "Level " + currentGame.level.ToString();
         gridToRender = currentGame.MyWorld.GetGameObjectGrid();

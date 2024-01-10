@@ -20,14 +20,12 @@ namespace rogueLike.GameObjects.Enemys
 
         public void Spawn(Vector2 spawnPos) => SetPos(spawnPos);
 
-        public void Patrol(GameObject[,] grid)
+        public void Patrol(World myWorld)
         {
-            
-        }
+            Random rand = new Random();
+            int randomDirection = rand.Next(0, 4);
 
-        public void BackToRoom(GameObject[,] grid)
-        {
-
+            Move((Direction)randomDirection, myWorld);
         }
 
         public bool FindPlayer(Vector2 playerPosition, GameObject[,] grid)
