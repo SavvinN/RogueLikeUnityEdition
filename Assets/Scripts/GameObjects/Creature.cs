@@ -19,59 +19,65 @@ namespace rogueLike.GameObjects
             SetSymbol('?');
             Walkable = false;
         }
-        internal void Move(Direction direct, World myWorld)
+
+        internal void Move(Direction direct, World myWorld, float frameCount)
         {
-                Vector2 movedPos = Vector2.Zero;
+            Vector2 movedPos;
 
-                switch (direct)
-                {
-                    case Direction.Up:
-                        movedPos = new Vector2(GetPos().X - 1, GetPos().Y);
-                        break;
-                    case Direction.Down:
-                        movedPos = new Vector2(GetPos().X + 1, GetPos().Y);
-                        break;
-                    case Direction.Left:
-                        movedPos = new Vector2(GetPos().X, GetPos().Y - 1);
-                        break;
-                    case Direction.Right:
-                        movedPos = new Vector2(GetPos().X, GetPos().Y + 1);
-                        break;
-                }
+            if (Vector2.FromDirection.TryGetValue(direct, out movedPos))
+            {
+                movedPos = GetPos() + Vector2.FromDirection[direct];
+            }
+            else
+            {
+                movedPos = Vector2.Zero;
+            }
 
-                if (myWorld.IsPosWalkable(movedPos))
-                {
-                    Creature entity = myWorld.GetGameObjectGrid()[(int)Position.X, (int)Position.Y] as Creature;
-                    myWorld.SetObject(GetPos(), myWorld.GetElementAt(GetPos()));
-                    SetPos(movedPos);
+            TryToWalk(movedPos, myWorld);
 
-                    if(entity != null)
-                    myWorld.SetObject(GetPos(), entity);
-                }     
+            LastMovedFrame = (int)frameCount;
         }
 
-        internal virtual Vector2 Attack(Direction direct, GameObject[,] world)
+        public void TryToWalk(Vector2 movedPos, World myWorld)
         {
-            Vector2 attackPos = Vector2.Zero;
-            switch(direct)
+            if (myWorld.IsPosWalkable(movedPos))
             {
-                case Direction.Left:
-                    attackPos = GetPos() + -Vector2.UnitY;
-                    break;
-                case Direction.Right:
-                    attackPos = GetPos() + Vector2.UnitY;
-                    break;
-                case Direction.Up:
-                    attackPos = GetPos() + -Vector2.UnitX;
-                    break;
-                case Direction.Down:
-                    attackPos = GetPos() + Vector2.UnitX;
-                    break;
+                Creature entity = myWorld.GetGameObjectGrid()[Position.X, Position.Y] as Creature;
+                myWorld.SetObject(GetPos(), myWorld.GetElementAt(GetPos()));
+                SetPos(movedPos);
+
+                if (entity != null)
+                myWorld.SetObject(GetPos(), entity);
             }
-            if (world[(int)attackPos.X, (int)attackPos.Y].GetType() != new Wall().GetType())
-            return attackPos;
+        }
+
+        internal virtual Vector2 Attack(Direction direct, World myWorld)
+        {
+            Vector2 attackPos;
+
+            if(Vector2.FromDirection.TryGetValue(direct, out attackPos))
+            {
+                attackPos = GetPos() + Vector2.FromDirection[direct];
+            }
             else
-            return Vector2.Zero;
+            {
+                attackPos = Vector2.Zero;
+            }
+
+            TryToHit(attackPos, myWorld);
+
+            return attackPos;
+        }
+
+        public void TryToHit(Vector2 attackPos, World myWorld)
+        {
+            GameObject objectAt = myWorld.GetGameObjectGrid()[attackPos.X, attackPos.Y];
+            Creature attackedObj = objectAt as Creature;
+
+            if (attackedObj != null)
+            {
+                attackedObj.Dead(myWorld);
+            }
         }
 
         public void Dead(World myWorld)

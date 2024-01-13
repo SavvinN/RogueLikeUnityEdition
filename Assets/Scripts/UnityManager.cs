@@ -59,8 +59,14 @@ public class UnityManager : MonoBehaviour
 
     void Update()
     {
-        if (currentGame.GameStatus == true)
+        if (!currentGame.IsGameOver)
         {
+            if (currentGame.IsGoal())
+            {
+                DestroyWorld();
+                UpdateWorld();
+            }
+
             var currentPlayer = currentGame.MyWorld.GetPlayer();
             var zombies = currentGame.MyWorld.GetZombies();
             var archers = currentGame.MyWorld.GetArchers();
@@ -76,12 +82,6 @@ public class UnityManager : MonoBehaviour
             DestroyEnemyPrefabs(_archers, archers);
 
             currentGame.frameCount += Time.deltaTime * 100;
-
-            if (currentGame.IsGoal())
-            {
-                DestroyWorld();
-                UpdateWorld();
-            }
         }
         else
         {

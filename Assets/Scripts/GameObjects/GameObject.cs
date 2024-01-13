@@ -20,5 +20,11 @@ namespace rogueLike.GameObjects
         public void SetPos(Vector2 pos) => _position = pos;
         public char GetSymbol() => _symbol;
         protected void SetSymbol(char chr) => _symbol = chr;
+
+        public GameObject Clone()
+        {
+            GameObject copy = (GameObject)this.MemberwiseClone();
+            return copy;
+        }
     }
 }

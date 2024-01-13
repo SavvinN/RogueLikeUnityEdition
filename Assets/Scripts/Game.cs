@@ -2,6 +2,7 @@
 using rogueLike.GameObjects.Enemys;
 using rogueLike.GameObjects.MazeObjects;
 using System;
+using System.Collections.Generic;
 using static System.Console;
 
 namespace rogueLike
@@ -9,8 +10,8 @@ namespace rogueLike
     public class Game
     {
         System.Numerics.Vector2 position;
-        
-        public int  level = 1,
+
+        public int level = 1,
                     life = 3;
         public float frameCount = 0;
         private World myWorld;
@@ -22,63 +23,34 @@ namespace rogueLike
             GameStatus = true;
         }
 
-        public void Start()
-        {
-            
-        }
-
-        public void HandleEntityAction()
-        {
-            HandleArrowsAction();
-            HandlePlayerInput(myWorld.GetPlayer());
-            HandleEnemyAction(myWorld.GetZombies(), myWorld.GetArchers());
-        }
-
-        public void HandleArrowsAction()
-        {
-            var arrows = myWorld.GetAllArrows();
-
-            foreach (var arrow in arrows)
-            {
-                if (arrow.Position != Vector2.Zero && frameCount - arrow.LastMovedFrame > arrow.velocity)
-                {
-                    arrow.Move();
-                    arrow.LastMovedFrame = (int)frameCount;
-                }
-                TryToHit(arrow.Position, myWorld ,myWorld.GetPlayer());
-            }
-
-            if (arrows is not null)
-                for (int i = 0; i < arrows.Count; i++)
-                {
-                    if (arrows[i].Position == Vector2.Zero)
-                        myWorld.RemoveArrow(arrows[i]);
-                }
-        }
-
         public void RegenerateLevel()
         {
             life--;
             myWorld.GenerateMaze(level);
-            myWorld.GetAllArrows().Clear(); 
-            Start();
+            myWorld.GetAllArrows().Clear();
         }
 
         public bool IsGoal()
         {
-            GameObject elementAtPlayerPos = myWorld.GetElementAt(myWorld.GetPlayer().GetPos());
+            return IsPlayerDead() || PlayerOnExit();
+        }
 
-            if(life <= 0)
-            {
-                GameStatus = false;
-            }
-                
+        public bool IsGameOver => GameStatus = life <= 0;
+
+        public bool IsPlayerDead() 
+        {
             if (myWorld.GetPlayer().Position == Vector2.Zero)
             {
                 RegenerateLevel();
                 return true;
             }
+            else
+                return false;
+        } 
 
+        public bool PlayerOnExit()
+        {
+            GameObject elementAtPlayerPos = myWorld.GetElementAt(myWorld.GetPlayer().GetPos());
             if (World.CompareObjects(elementAtPlayerPos, new ExitDoor()))
             {
                 LevelUp();
@@ -86,25 +58,12 @@ namespace rogueLike
             }
             else
                 return false;
-            
         }
 
         public void LevelUp()
         {
             level++;
             myWorld.GenerateMaze(level);
-            Start();
-        }
-
-        public void HandlePlayerInput(Player currentPlayer)
-        {
-            while (KeyAvailable)
-            {
-                ConsoleKeyInfo keyInfo = ReadKey(true);
-                ConsoleKey key = keyInfo.Key;
-                HandleMoveInput(key);
-                HandleAttackInput(key);
-            }
         }
 
         public void HandleMoveInput(ConsoleKey key)
@@ -118,16 +77,16 @@ namespace rogueLike
                 switch (key)
                 {
                     case ConsoleKey.UpArrow:
-                        currentPlayer.Move(Direction.Up, myWorld);
+                        currentPlayer.Move(Direction.Up, myWorld, frameCount);
                         break;
                     case ConsoleKey.DownArrow:
-                        currentPlayer.Move(Direction.Down, myWorld);
+                        currentPlayer.Move(Direction.Down, myWorld, frameCount);
                         break;
                     case ConsoleKey.RightArrow:
-                        currentPlayer.Move(Direction.Right, myWorld);
+                        currentPlayer.Move(Direction.Right, myWorld, frameCount);
                         break;
                     case ConsoleKey.LeftArrow:
-                        currentPlayer.Move(Direction.Left, myWorld);
+                        currentPlayer.Move(Direction.Left, myWorld, frameCount);
                         break;
                 }
 
@@ -146,24 +105,19 @@ namespace rogueLike
                 switch (key)
                 {
                     case ConsoleKey.W:
-                        attackPos = currentPlayer.Attack(Direction.Up, myWorld.GetGameObjectGrid());
+                        attackPos = currentPlayer.Attack(Direction.Up, myWorld);
                         break;
                     case ConsoleKey.S:
-                        attackPos = currentPlayer.Attack(Direction.Down, myWorld.GetGameObjectGrid());
+                        attackPos = currentPlayer.Attack(Direction.Down, myWorld);
                         break;
                     case ConsoleKey.D:
-                        attackPos = currentPlayer.Attack(Direction.Right, myWorld.GetGameObjectGrid());
+                        attackPos = currentPlayer.Attack(Direction.Right, myWorld);
                         break;
                     case ConsoleKey.A:
-                        attackPos = currentPlayer.Attack(Direction.Left, myWorld.GetGameObjectGrid());
+                        attackPos = currentPlayer.Attack(Direction.Left, myWorld);
                         break;
                 }
-
                 currentPlayer.LastAttackFrame = (int)frameCount;
-                foreach (var enemy in myWorld.GetAllCreatures())
-                {
-                    Game.TryToHit(attackPos, myWorld, enemy);
-                }
             }
             return attackPos;
         }
@@ -180,8 +134,7 @@ namespace rogueLike
             foreach (var archer in archs)
             {
                 archer.FindPlayer(myWorld.GetPlayer().Position, myWorld.GetGameObjectGrid());
-                if(!(myWorld.GetPlayer().Position.X == archer.Position.X)
-                    && !(myWorld.GetPlayer().Position.Y == archer.Position.Y))
+                if(!(myWorld.GetPlayer().Position == archer.Position))
                 EnemyMovement(archer);
 
                 if(EnemyObsPlayer(archer) != Direction.None)
@@ -189,55 +142,52 @@ namespace rogueLike
             }
         }
 
+        public void HandleArrowsAction()
+        {
+            var arrows = myWorld.GetAllArrows();
+
+            foreach (var arrow in arrows)
+            {
+                if (arrow.Position != Vector2.Zero && frameCount - arrow.LastMovedFrame > arrow.velocity)
+                {
+                    arrow.Move(myWorld);
+                    arrow.LastMovedFrame = (int)frameCount;
+                }
+            }
+
+            if (arrows is not null)
+                for (int i = 0; i < arrows.Count; i++)
+                {
+                    if (arrows[i].Position == Vector2.Zero)
+                        myWorld.RemoveArrow(arrows[i]);
+                }
+        }
+
         public Direction EnemyObsPlayer(Enemy enemy)
         {
             var nextStep = enemy.GetNextStep(myWorld.GetPlayer().Position) - enemy.Position;
 
-            if (nextStep == Vector2.UnitX)
-                return Direction.Down;
+            if(Vector2.ToDirection.TryGetValue(nextStep, out Direction direction))
+            {
+                return direction;
+            }
             else
-            if (nextStep == -Vector2.UnitX)
-                return Direction.Up;
-            else
-            if (nextStep == Vector2.UnitY)
-                return Direction.Right;
-            else
-            if (nextStep == -Vector2.UnitY)
-                return Direction.Left;
-            else
+            {
+                enemy.Patrol(myWorld, frameCount);
                 return Direction.None;
+            }
         }
 
         public void EnemyMovement(Enemy enemy)
         {
             var direct = EnemyObsPlayer(enemy);
 
-            if (frameCount - enemy.LastMovedFrame > enemy.MoveCooldown && direct != Direction.None)
+            if (frameCount - enemy.LastMovedFrame > enemy.MoveCooldown)
             {
-                var temp = enemy.Position;
-                switch (direct)
-                {
-                    case Direction.Left:
-                        enemy.Move(direct, myWorld);
-                        break;
-                    case Direction.Right:
-                        enemy.Move(direct, myWorld);
-                        break;
-                    case Direction.Down:
-                        enemy.Move(direct, myWorld);
-                        break;
-                    case Direction.Up:
-                        enemy.Move(direct, myWorld);
-                        break;
-                    case Direction.None:
-                        enemy.Patrol(myWorld); 
-                        break;
-                }
-
-                if (temp != enemy.Position)
-                    enemy.LastMovedFrame = (int)frameCount;
+                enemy.Move(direct, myWorld, frameCount);  
             }
         }
+
 
         private void RangeEnemyAttackment(Archer archer)
         {
@@ -256,9 +206,9 @@ namespace rogueLike
             if (archer.Position.Y > playerPos.Y && archer.Position.X == playerPos.X)
                 direct = Direction.Left;
 
-            if (frameCount - archer.LastAttackFrame > archer.AttackCooldown && direct != Direction.None)
+            if (frameCount - archer.LastAttackFrame > archer.AttackCooldown)
             {
-                var Arrow = new Arrow(archer.GetPos(), direct, myWorld.GetGameObjectGrid());
+                var Arrow = new Arrow(archer.GetPos(), direct);
                 myWorld.AddArrow(Arrow);
                 archer.LastAttackFrame = (int)frameCount;
             }
@@ -268,37 +218,18 @@ namespace rogueLike
         {
             var playerPos = myWorld.GetPlayer().Position;
             var attackPos = Vector2.Zero;
+
             if (frameCount - enemy.LastMovedFrame > enemy.AttackCooldown)
             {
-                if (enemy.Position + Vector2.UnitX == playerPos)
-                    attackPos = enemy.Attack(Direction.Down, myWorld.GetGameObjectGrid());
-                else
-                if (enemy.Position - Vector2.UnitX == playerPos)
-                    attackPos = enemy.Attack(Direction.Up, myWorld.GetGameObjectGrid());
-                else
-                if (enemy.Position + Vector2.UnitY == playerPos)
-                    attackPos = enemy.Attack(Direction.Right, myWorld.GetGameObjectGrid());
-                else
-                if (enemy.Position - Vector2.UnitY == playerPos)
-                    attackPos = enemy.Attack(Direction.Left, myWorld.GetGameObjectGrid());
+                foreach (var direct in Vector2.ToDirection)
+                {
+                    if (enemy.Position + direct.Key == playerPos)
+                        attackPos = enemy.Attack(direct.Value, myWorld);
+                }
 
                 enemy.LastMovedFrame = (int)frameCount;
-                if (attackPos != Vector2.Zero)
-                    TryToHit(attackPos, myWorld, myWorld.GetPlayer());
             }
         }
-
-        public static void TryToHit(Vector2 attackPos, World myWorld, Creature creature)
-        {
-            GameObject objectAt = myWorld.GetGameObjectGrid()[attackPos.X, attackPos.Y];
-            Creature attackedObj = objectAt as Creature;
-
-            if (attackedObj != null && attackedObj == creature)
-            {
-                attackedObj.Dead(myWorld);
-            }
-        }
-
     }
 }
 

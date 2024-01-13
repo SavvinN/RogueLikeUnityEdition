@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace rogueLike
 {
@@ -48,6 +49,22 @@ namespace rogueLike
         {
             return HashCode.Combine(X, Y);
         }
+
+        public static Dictionary<Vector2, Direction> ToDirection = new Dictionary<Vector2, Direction>()
+            {
+                {UnitX, Direction.Down},
+                {-UnitX, Direction.Up},
+                {UnitY, Direction.Right},
+                {-UnitY, Direction.Left}
+            };
+
+        public static Dictionary<Direction, Vector2> FromDirection = new Dictionary<Direction, Vector2>()
+            {
+                {Direction.Down, UnitX},
+                {Direction.Up, -UnitX},
+                {Direction.Right, UnitY},
+                {Direction.Left, -UnitY}
+            };
     }
 }
 

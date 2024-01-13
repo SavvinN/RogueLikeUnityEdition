@@ -5,7 +5,6 @@ using System;
 
 namespace rogueLike.GameObjects.Enemys
 {
-
     public class Enemy : Creature
     {
         private int viewDistance = 6;
@@ -18,14 +17,11 @@ namespace rogueLike.GameObjects.Enemys
 
         protected void SetViewDistance(int dist) => viewDistance = dist;
 
-        public void Spawn(Vector2 spawnPos) => SetPos(spawnPos);
-
-        public void Patrol(World myWorld)
+        public void Patrol(World myWorld, float frameCount)
         {
             Random rand = new Random();
             int randomDirection = rand.Next(0, 4);
-
-            Move((Direction)randomDirection, myWorld);
+            Move((Direction)randomDirection, myWorld, frameCount);
         }
 
         public bool FindPlayer(Vector2 playerPosition, GameObject[,] grid)

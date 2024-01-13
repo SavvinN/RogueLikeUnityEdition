@@ -5,6 +5,7 @@ using rogueLike.GameObjects;
 using rogueLike.GameObjects.Enemys;
 using rogueLike.GameObjects.MazeObjects;
 using rogueLike.MazeGenerator;
+using Unity.VisualScripting;
 namespace rogueLike
 {
     public class World
@@ -50,14 +51,14 @@ namespace rogueLike
             _grid = maze.GetGrid();
             (Rows, Cols) = maze.GetSize();
             _gameObjectsGrid = new GameObject[Rows, Cols];
-            _gameObjGridCopy = new GameObject[Rows, Cols];  
+            _gameObjGridCopy = new GameObject[Rows, Cols];
             CreateExitDoor();
             worldFrame = CreateWorldFrame();
             constructObjectsGrid();
             for (int y = 0; y < Rows; y++)
                 for (int x = 0; x < Cols; x++)
                 {
-                    _gameObjGridCopy[y,x] = _gameObjectsGrid[y, x];
+                    _gameObjGridCopy[y, x] = _gameObjectsGrid[y, x];
                 }
             _enemySpawnMap = GenerateEnemySpawnMap();
             _itemSpawnMap = GenerateItemSpawnMap();
@@ -68,29 +69,26 @@ namespace rogueLike
         internal void AddArrow(Arrow a) => arrow.Add(a);
         internal void RemoveArrow(Arrow a)
         {
-                arrow.Remove(a);
+            arrow.Remove(a);
         }
 
-        internal List<Arrow> GetAllArrows() => arrow; 
+        internal List<Arrow> GetAllArrows() => arrow;
 
         private void constructObjectsGrid()
         {
+            Dictionary<char, GameObject> symbolObjectDictionary = new Dictionary<char, GameObject>()
+            {
+                { wall.GetSymbol(), wall},
+                { ground.GetSymbol(), ground},
+                { room.GetSymbol(), room},
+                { exitDoor.GetSymbol(), exitDoor}
+            };
+
             for (int y = 0; y < Rows; y++)
             {
                 for (int x = 0; x < Cols; x++)
                 {
-                    if (_grid[y, x] == wall.GetSymbol())
-                    {
-                        SetObject(y, x, new Wall());
-                    }
-                    if (_grid[y, x] == ground.GetSymbol())
-                    {
-                        SetObject(y, x, new Ground());
-                    }
-                    if (_grid[y, x] == room.GetSymbol())
-                    {
-                        SetObject(y, x, new Room());
-                    }
+                    SetObject(y, x, symbolObjectDictionary[_grid[y, x]].Clone());
                 }
             }
         }
@@ -100,6 +98,7 @@ namespace rogueLike
             _gameObjectsGrid[y, x] = obj;
             _gameObjectsGrid[y, x].SetPos(new Vector2(y, x));
         }
+
         internal void SetObject(Vector2 pos, GameObject obj)
         {
             int x = pos.Y;
@@ -108,7 +107,6 @@ namespace rogueLike
             _gameObjectsGrid[y, x].SetPos(new Vector2(y, x));
         }
 
-        internal GameObject GetObjectAt(Vector2 pos) => _gameObjGridCopy[pos.X, pos.Y];
         private void CreateExitDoor()
         {
             int random = rnd.Next(2, Cols - 2);
@@ -120,35 +118,32 @@ namespace rogueLike
 
         private void SpawnEnemy()
         {
-            if(_enemySpawnMap.Count != 0)
+            zombie = new Zombie[enemyCount];
+            archer = new Archer[zombie.Length - enemyCount / 2];
+            for (int i = 0; i < zombie.Length; i++)
             {
-                zombie = new Zombie[enemyCount];
-                archer = new Archer[zombie.Length - enemyCount / 2];
-                for (int i = 0; i < zombie.Length; i++)
-                {
-                    zombie[i] = new Zombie(_enemySpawnMap[rnd.Next(0, _enemySpawnMap.Count - 1)]);
-                    _gameObjectsGrid[zombie[i].GetPos().X, zombie[i].GetPos().Y] = zombie[i];
-                }
-                for (int i = 0; i < archer.Length; i++)
-                {
-                    archer[i] = new Archer(_enemySpawnMap[rnd.Next(0, _enemySpawnMap.Count - 1)]);
-                    _gameObjectsGrid[archer[i].GetPos().X, archer[i].GetPos().Y] = archer[i];
-                }
+                zombie[i] = new Zombie(_enemySpawnMap[rnd.Next(0, _enemySpawnMap.Count - 1)]);
+                _gameObjectsGrid[zombie[i].GetPos().X, zombie[i].GetPos().Y] = zombie[i];
+            }
+            for (int i = 0; i < archer.Length; i++)
+            {
+                archer[i] = new Archer(_enemySpawnMap[rnd.Next(0, _enemySpawnMap.Count - 1)]);
+                _gameObjectsGrid[archer[i].GetPos().X, archer[i].GetPos().Y] = archer[i];
             }
         }
 
         private void SpawnPlayer()
         {
-            if(exitDoor.GetPos().Y > Cols/2)
+            if (exitDoor.GetPos().Y > Cols / 2)
             {
-                player = _gameObjectsGrid[1, 1] == wall 
-                       ? new Player(new Vector2(2, 1)) 
+                player = _gameObjectsGrid[1, 1] == wall
+                       ? new Player(new Vector2(2, 1))
                        : new Player(new Vector2(1, 1));
             }
             else
             {
-                player = _gameObjectsGrid[1, Cols - 2] == wall 
-                       ? new Player(new Vector2(1, Cols - 3)) 
+                player = _gameObjectsGrid[1, Cols - 2] == wall
+                       ? new Player(new Vector2(1, Cols - 3))
                        : new Player(new Vector2(1, Cols - 2));
             }
 
@@ -158,19 +153,25 @@ namespace rogueLike
         public List<Vector2> GenerateItemSpawnMap()
         {
             List<Vector2> spawnMap = new List<Vector2>();
+            Vector2[] Dir = new Vector2[4]
+            {
+                -Vector2.UnitX,
+                Vector2.UnitX,
+                -Vector2.UnitY,
+                Vector2.UnitY
+            };
+
             int wallCount = 0;
-            for (int y = Cols/2; y < Cols - 2; y++)
+            for (int y = Cols / 2; y < Cols - 2; y++)
             {
                 for (int x = 2; y < Rows - 2; y++)
                 {
-                    if (CompareObjects(_gameObjectsGrid[y - 1, x], wall))
-                        wallCount++;
-                    if (CompareObjects(_gameObjectsGrid[y + 1, x], wall))
-                        wallCount++;
-                    if (CompareObjects(_gameObjectsGrid[y , x - 1], wall))
-                        wallCount++;
-                    if (CompareObjects(_gameObjectsGrid[y, x + 1], wall))
-                        wallCount++;
+                    foreach(var d in Dir)
+                    {
+                        if (CompareObjects(_gameObjectsGrid[y + d.X, x + d.Y], wall))
+                            wallCount++;
+                    }
+
                     if (wallCount == 3 && CompareObjects(_gameObjectsGrid[y, x], wall))
                     {
                         spawnMap.Add(new Vector2(y, x));
@@ -188,7 +189,7 @@ namespace rogueLike
             {
                 for (int x = 2; x < Cols - 1; x++)
                 {
-                    if (_gameObjectsGrid[y, x].GetSymbol() == room.GetSymbol())
+                    if (CompareObjects(_gameObjectsGrid[y, x], room))
                     {
                         spawnMap.Add(new Vector2(y, x));
                     }
@@ -196,8 +197,6 @@ namespace rogueLike
             }
             return spawnMap;
         }
-
-        public char[,] GetCharGrid() => _grid;
 
         internal GameObject[,] GetGameObjectGrid() => _gameObjectsGrid;
 
@@ -226,14 +225,17 @@ namespace rogueLike
         }
 
         internal static bool CompareObjects(GameObject obj1, GameObject obj2) => obj1.GetType().Equals(obj2.GetType());
-        public bool IsPosWalkable(Vector2 pos) => _gameObjectsGrid[pos.X, pos.Y].IsWalkable;
+        public bool IsPosWalkable(Vector2 pos) => 
+            (pos.Y >= 0 && pos.X >= 0) && (pos.Y < sizeX && pos.X < sizeY)
+            ? _gameObjectsGrid[pos.X, pos.Y].IsWalkable 
+            : false;
+
         internal GameObject GetElementAt(Vector2 Pos) => _gameObjGridCopy[Pos.X, Pos.Y];
-        internal GameObject GetObject(Vector2 pos) => _gameObjectsGrid[pos.X, pos.Y];
         internal List<Creature> GetAllCreatures()
         {
             var list = new List<Creature>();
             list.Add(player);
-            foreach(var z in zombie)
+            foreach (var z in zombie)
             {
                 list.Add(z);
             }
@@ -241,7 +243,6 @@ namespace rogueLike
             {
                 list.Add(a);
             }
-
             return list;
         }
         internal Player GetPlayer() => player;

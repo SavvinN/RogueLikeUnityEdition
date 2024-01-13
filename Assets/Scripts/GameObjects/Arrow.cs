@@ -10,18 +10,18 @@ namespace rogueLike.GameObjects
         private int _distance = 5;
         public int LastMovedFrame = 0;
         public int velocity = 30;
-        public GameObject[,] _grid;
-        internal Arrow(Vector2 pos, Direction direction, GameObject[,] grid)
+
+        internal Arrow(Vector2 pos, Direction direction)
         {
             Walkable = true;
             SetSymbol('+');
             SetPos(pos);
             _direction = direction;
-            _grid = grid;
         }
 
-        public void Move()
+        public void Move(World myWorld)
         {
+
             var movingPos = Vector2.Zero;
 
             switch (_direction)
@@ -40,14 +40,26 @@ namespace rogueLike.GameObjects
                     break;
             }
 
-            if (_grid[(int)movingPos.X, (int)movingPos.Y].GetType() != new Wall().GetType() 
+            if (!World.CompareObjects(myWorld.GetElementAt(movingPos), new Wall())
                 && !(_distance < 0))
             {
                 SetPos(movingPos);
+                TryToHit(GetPos(), myWorld);
                 _distance--;
             }
             else
                 RemoveArrow();
+        }
+
+        public void TryToHit(Vector2 attackPos, World myWorld)
+        {
+            GameObject objectAt = myWorld.GetGameObjectGrid()[attackPos.X, attackPos.Y];
+            Creature attackedObj = objectAt as Creature;
+
+            if (attackedObj != null && World.CompareObjects(attackedObj, myWorld.GetPlayer()))
+            {
+                attackedObj.Dead(myWorld);
+            }
         }
 
         public void RemoveArrow()
