@@ -21,7 +21,6 @@ namespace rogueLike
         private Archer[] archer;
         private readonly List<Arrow> arrow = new();
         private List<Vector2> _enemySpawnMap;
-        private List<Vector2> _itemSpawnMap;
         private char[,] _grid;
         private String worldFrame = String.Empty;
         private int Rows = 0,
@@ -61,7 +60,6 @@ namespace rogueLike
                     _gameObjGridCopy[y, x] = _gameObjectsGrid[y, x];
                 }
             _enemySpawnMap = GenerateEnemySpawnMap();
-            _itemSpawnMap = GenerateItemSpawnMap();
             SpawnEnemy();
             SpawnPlayer();
         }
@@ -148,38 +146,6 @@ namespace rogueLike
             }
 
             SetObject(player.Position.X, player.Position.Y, player);
-        }
-
-        public List<Vector2> GenerateItemSpawnMap()
-        {
-            List<Vector2> spawnMap = new();
-            Vector2[] Dir = new Vector2[4]
-            {
-                -Vector2.UnitX,
-                Vector2.UnitX,
-                -Vector2.UnitY,
-                Vector2.UnitY
-            };
-
-            int wallCount = 0;
-            for (int y = Cols / 2; y < Cols - 2; y++)
-            {
-                for (int x = 2; y < Rows - 2; y++)
-                {
-                    foreach(var d in Dir)
-                    {
-                        if (CompareObjects(_gameObjectsGrid[y + d.X, x + d.Y], wall))
-                            wallCount++;
-                    }
-
-                    if (wallCount == 3 && CompareObjects(_gameObjectsGrid[y, x], wall))
-                    {
-                        spawnMap.Add(new Vector2(y, x));
-                    }
-                    wallCount = 0;
-                }
-            }
-            return spawnMap;
         }
 
         private List<Vector2> GenerateEnemySpawnMap()

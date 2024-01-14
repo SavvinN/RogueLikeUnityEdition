@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 
 namespace rogueLike.GameObjects.Enemys
 {
@@ -14,6 +15,29 @@ namespace rogueLike.GameObjects.Enemys
             SetPos(spawnPos);
             SetSymbol('A');
             SetViewDistance(8);
+        }
+
+        public override void EnemyAttackment(World myWorld, float frameCount)
+        {
+            var playerPos = myWorld.GetPlayer().Position;
+            var attackPos = Position - playerPos;
+
+            attackPos.X = attackPos.X != 0
+                ? -1 * Math.Sign(attackPos.X)
+                : 0;
+
+            attackPos.Y = attackPos.Y != 0
+                ? -1 * Math.Sign(attackPos.Y)
+                : 0;
+
+            var direct = Vector2.GetToDirection(attackPos);
+
+            if (frameCount - LastFireFrame > AttackCooldown && direct != Direction.None)
+            {
+                var Arrow = new Arrow(Position, direct);
+                myWorld.AddArrow(Arrow);
+                LastFireFrame = (int)frameCount;
+            }
         }
     }
 }

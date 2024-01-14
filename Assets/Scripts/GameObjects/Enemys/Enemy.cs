@@ -1,5 +1,4 @@
 ﻿using rogueLike.GameObjects.MazeObjects;
-using System.Numerics;
 using System.Collections.Generic;
 using System;
 using System.Linq;
@@ -9,9 +8,9 @@ namespace rogueLike.GameObjects.Enemys
     public class Enemy : Creature
     {
         private int viewDistance = 6;
-        private Vector2 lastPlayerPos;
-        private bool seeThePlayer = true;
-        public List<Vector2> path = new();
+        private readonly int PatrolCooldown = 100;
+        public bool seeThePlayer = true;
+        private List<Vector2> path = new();
 
         public Enemy()
         {
@@ -24,6 +23,8 @@ namespace rogueLike.GameObjects.Enemys
         {
             Random rand = new();
             int randomDirection = rand.Next(0, 4);
+
+            if(frameCount - LastActionFrame > PatrolCooldown)
             Move((Direction)randomDirection, myWorld, frameCount);
         }
 
@@ -36,18 +37,22 @@ namespace rogueLike.GameObjects.Enemys
                 foreach (var pos in sawPath)
                 {
                     seeThePlayer = !World.CompareObjects(grid[pos.X, pos.Y], new Wall()); 
-
-                    if(seeThePlayer) break;
+                    if(!seeThePlayer) break;
                 }
-                path = seeThePlayer ? GetPathTo(playerPosition) : path;
+
+                if (seeThePlayer)
+                    path = GetPathTo(playerPosition);         
             }
         }
 
         private List<Vector2> GetPathTo(Vector2 playerPosition)
         {
-            List<Vector2> path = new();
             Vector2 viewPoint = Position;
-            path.Add(viewPoint);
+            List<Vector2> path = new()
+            {
+                viewPoint
+            };
+
             while (viewPoint != playerPosition)
             {
                 float temp = viewPoint.X;
@@ -78,6 +83,15 @@ namespace rogueLike.GameObjects.Enemys
             }
             else
                 return Position;
+        }
+
+        public void EnemyMovement(World myWorld, Direction ObsedPlayerDirect, float frameCount) => Move(ObsedPlayerDirect, myWorld, frameCount);
+
+        public Direction GetDirectionToPlayer() => Vector2.GetToDirection(GetNextStep() - Position);
+
+        public virtual void EnemyAttackment(World myWorld, float frameCount)
+        {
+            throw new NotImplementedException();
         }
 
     }

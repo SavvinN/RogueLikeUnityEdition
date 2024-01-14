@@ -72,7 +72,7 @@ public class UnityManager : MonoBehaviour
             var archers = currentGame.MyWorld.GetArchers();
             var arrows = currentGame.MyWorld.GetAllArrows();
 
-            currentGame.HandleEnemyAction(zombies, archers);
+            currentGame.HandleEnemyBehavior(zombies, archers);
 
             currentGame.HandleArrowsAction();
 
@@ -153,12 +153,12 @@ public class UnityManager : MonoBehaviour
 
     public void InitializeEnemy(UnityEngine.GameObject[] enemysPrefabs, Enemy[] enemys, UnityEngine.GameObject enemyType)
     {
-            for (int i = 0; i < enemys.Length; i++)
-            {
-                enemysPrefabs[i] = Instantiate(enemyType);
-                enemysPrefabs[i].transform.position = new Vector3(enemys[i].Position.X, _entityHeight, enemys[i].Position.Y);
-                enemysPrefabs[i].transform.parent = World.transform;
-            }
+        for (int i = 0; i < enemys.Length; i++)
+        {
+            enemysPrefabs[i] = Instantiate(enemyType);
+            enemysPrefabs[i].transform.position = new Vector3(enemys[i].Position.X, _entityHeight, enemys[i].Position.Y);
+            enemysPrefabs[i].transform.parent = World.transform;
+        }
     }
 
     public void UpdateEntityAction(Player player, Zombie[] zombies, Archer[] archers, List<Arrow> arrows)
@@ -167,10 +167,10 @@ public class UnityManager : MonoBehaviour
                 new Vector3(player.Position.X, _entityHeight, player.Position.Y),
                 Time.deltaTime * _playerVelocity);
 
-        Camera.transform.position = Vector3.Lerp(Camera.transform.position, 
-            _currentPlayer.transform.position + new Vector3(0, _cameraHeight, 0), 
+        Camera.transform.position = Vector3.Lerp(Camera.transform.position,
+            _currentPlayer.transform.position + new Vector3(0, _cameraHeight, 0),
             Time.deltaTime * _cameraVelociy);
-        
+
         UpdateEnemy(_zombies, zombies);
         UpdateEnemy(_archers, archers);
         UpdateArrows(arrows);
@@ -188,6 +188,12 @@ public class UnityManager : MonoBehaviour
 
     public void UpdateArrows(List<Arrow> arrows)
     {
+        while (arrows.Count < _arrows.Count)
+        {
+            Destroy(_arrows[0]);
+            _arrows.RemoveAt(0);
+        }
+
         while (arrows.Count > _arrows.Count)
         {
             var arrow = Instantiate(Arrow);
@@ -195,20 +201,11 @@ public class UnityManager : MonoBehaviour
             arrow.transform.position = new Vector3(arrows.Last().Position.X, _entityHeight, arrows.Last().Position.Y);
         }
 
-        while (arrows.Count < _arrows.Count)
+        for (int i = 0; i < arrows.Count; i++)
         {
-            Destroy(_arrows[0]);
-            _arrows.RemoveAt(0);
-        }
-
-        if (arrows.Count == _arrows.Count)
-        {
-            for (int i = 0; i < arrows.Count; i++)
-            {
-                _arrows[i].transform.position = Vector3.MoveTowards(_arrows[i].transform.position,
-                    new Vector3(arrows[i].Position.X, _entityHeight, arrows[i].Position.Y),
-                    Time.deltaTime * _arrowVelocity);
-            }
+            _arrows[i].transform.position = Vector3.MoveTowards(_arrows[i].transform.position,
+                new Vector3(arrows[i].Position.X, _entityHeight, arrows[i].Position.Y),
+                Time.deltaTime * _arrowVelocity);
         }
     }
 
