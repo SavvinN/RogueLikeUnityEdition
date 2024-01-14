@@ -6,22 +6,25 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
+using static UnityManager;
 
 public class UnityManager : MonoBehaviour
 {
     private Game currentGame;
     private rogueLike.GameObjects.GameObject[,] gridToRender;
     public World myWorld;
-    private readonly int _entityHeight = 0;
+    private readonly float _entityHeight = 0;
+    private readonly float _groundHeight = -0.495f;
     private UnityEngine.GameObject _currentPlayer;
     private UnityEngine.GameObject[] _zombies;
     private UnityEngine.GameObject[] _archers;
-    private List<UnityEngine.GameObject> _arrows;
+    private List<UnityArrow> _arrows;
 
     [SerializeField] private float _playerVelocity = 8;
     [SerializeField] private float _enemyVelocity = 4;
-    [SerializeField] private float _cameraVelociy = 20;
+    [SerializeField] private float _cameraVelocity = 20;
     [SerializeField] private float _arrowVelocity = 9;
     [SerializeField] private int _cameraHeight = 20;
 
@@ -50,7 +53,7 @@ public class UnityManager : MonoBehaviour
     void Start()
     {
         PlayerController._myGame = currentGame;
-        _arrows = new List<UnityEngine.GameObject>();
+        _arrows = new();
         _currentPlayer = Instantiate(Player);
         HitParticle = Instantiate(HitParticle);
         PlayerController._attackParticle = HitParticle;
@@ -73,7 +76,6 @@ public class UnityManager : MonoBehaviour
             var arrows = currentGame.MyWorld.GetAllArrows();
 
             currentGame.HandleEnemyBehavior(zombies, archers);
-
             currentGame.HandleArrowsAction();
 
             UpdateEntityAction(currentPlayer, zombies, archers, arrows);
@@ -108,27 +110,30 @@ public class UnityManager : MonoBehaviour
 
         foreach (var obj in gridToRender)
         {
-            if (obj.GetType() == new Wall().GetType())
+            if (rogueLike.World.CompareObjects(obj, new Wall()))
             {
-                var spawnedObj = Instantiate(Wall);
-                spawnedObj.transform.position = new Vector3(obj.Position.X, _entityHeight, obj.Position.Y);
-                spawnedObj.transform.parent = World.transform;
+                AddWorldObject(obj, Wall, _entityHeight);
             }
             else
             {
-                var spawnedObj = Instantiate(Ground);
-                spawnedObj.transform.position = new Vector3(obj.Position.X, -0.495f, obj.Position.Y);
-                spawnedObj.transform.parent = World.transform;
+                AddWorldObject(obj, Ground, _groundHeight);
             }
         }
         InitializeEntity(currentGame.MyWorld.GetPlayer(), currentGame.MyWorld.GetZombies(), currentGame.MyWorld.GetArchers());
+    }
+
+    public void AddWorldObject(rogueLike.GameObjects.GameObject obj, UnityEngine.GameObject uObject, float height)
+    {
+        var spawnedObj = Instantiate(uObject);
+        spawnedObj.transform.position = new Vector3(obj.Position.X, height, obj.Position.Y);
+        spawnedObj.transform.parent = World.transform;
     }
 
     public void DestroyWorld()
     {
         for (var i = World.transform.childCount - 1; i >= 0; i--)
         {
-            UnityEngine.Object.Destroy(World.transform.GetChild(i).gameObject);
+            Destroy(World.transform.GetChild(i).gameObject);
         }
     }
 
@@ -169,7 +174,7 @@ public class UnityManager : MonoBehaviour
 
         Camera.transform.position = Vector3.Lerp(Camera.transform.position,
             _currentPlayer.transform.position + new Vector3(0, _cameraHeight, 0),
-            Time.deltaTime * _cameraVelociy);
+            Time.deltaTime * _cameraVelocity);
 
         UpdateEnemy(_zombies, zombies);
         UpdateEnemy(_archers, archers);
@@ -188,25 +193,79 @@ public class UnityManager : MonoBehaviour
 
     public void UpdateArrows(List<Arrow> arrows)
     {
-        while (arrows.Count < _arrows.Count)
+        List<UnityArrow> arrowsToRemove = new();
+
+        TryAddArrow(arrows);
+
+        foreach (var arrow in _arrows)
         {
-            Destroy(_arrows[0]);
-            _arrows.RemoveAt(0);
+            if (!arrows.Contains(arrow.rArrow))
+            {
+                arrow.DestroyMash();
+                arrowsToRemove.Add(arrow);
+            }
         }
 
-        while (arrows.Count > _arrows.Count)
-        {
-            var arrow = Instantiate(Arrow);
-            _arrows.Add(arrow);
-            arrow.transform.position = new Vector3(arrows.Last().Position.X, _entityHeight, arrows.Last().Position.Y);
-        }
+        RemoveDestroyedArrows(arrowsToRemove);
 
-        for (int i = 0; i < arrows.Count; i++)
+        UpdateArrowsMashPosition();
+    }
+
+    public void RemoveDestroyedArrows(List<UnityArrow> arrows)
+    {
+        foreach (var arrow in arrows)
         {
-            _arrows[i].transform.position = Vector3.MoveTowards(_arrows[i].transform.position,
-                new Vector3(arrows[i].Position.X, _entityHeight, arrows[i].Position.Y),
+            _arrows.Remove(arrow);
+        }
+    }
+
+    public void UpdateArrowsMashPosition()
+    {
+        for (int i = 0; i < _arrows.Count; i++)
+        {
+            _arrows[i].mash.transform.position = Vector3.MoveTowards(_arrows[i].mash.transform.position,
+                new Vector3(_arrows[i].rArrow.Position.X, _entityHeight, _arrows[i].rArrow.Position.Y),
                 Time.deltaTime * _arrowVelocity);
         }
     }
 
+    public void TryAddArrow(List<Arrow> arrows)
+    {
+        while (arrows.Count > _arrows.Count)
+        {
+            foreach (var arrow in arrows)
+            {
+                if (!CheckToContentsArrow(arrow))
+                    _arrows.Add(new UnityArrow(arrow, Arrow, _entityHeight));
+            }
+        }
+    }
+
+    public bool CheckToContentsArrow(Arrow arrow)
+    {
+        foreach (var arr in _arrows)
+        {
+            if (arrow == arr.rArrow)
+                return true;
+        }
+        return false;
+    }
+
+    public struct UnityArrow
+    {
+        public Arrow rArrow;
+        public UnityEngine.GameObject mash;
+
+        public UnityArrow(Arrow arrow, UnityEngine.GameObject obj, float height)
+        {
+            rArrow = arrow;
+            mash = Instantiate(obj);
+            mash.transform.position = new Vector3(arrow.Position.X, height, arrow.Position.Y);
+        }
+
+        public void DestroyMash()
+        {
+            Destroy(mash);
+        }
+    }
 }

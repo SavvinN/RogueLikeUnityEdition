@@ -27,19 +27,23 @@ public class PlayerController : MonoBehaviour
     {
         var Direction = _playerControl.MoveMap.Move.ReadValue<UnityEngine.Vector2>();
 
-        if (Direction == UnityEngine.Vector2.up)
-            _myGame.HandleMoveInput(ConsoleKey.UpArrow);
-        if (Direction == UnityEngine.Vector2.down)
-            _myGame.HandleMoveInput(ConsoleKey.DownArrow);
-        if (Direction == UnityEngine.Vector2.left)
-            _myGame.HandleMoveInput(ConsoleKey.LeftArrow);
-        if (Direction == UnityEngine.Vector2.right)
-            _myGame.HandleMoveInput(ConsoleKey.RightArrow);
+        Dictionary<UnityEngine.Vector2, ConsoleKey> MoveDirections = new()
+            {
+                {UnityEngine.Vector2.up , ConsoleKey.UpArrow},
+                {UnityEngine.Vector2.down , ConsoleKey.DownArrow},
+                {UnityEngine.Vector2.left , ConsoleKey.LeftArrow},
+                {UnityEngine.Vector2.right , ConsoleKey.RightArrow}
+            };
+
+        if (MoveDirections.TryGetValue(Direction, out var value))
+        {
+            _myGame.HandleMoveInput(value);
+        }
     }
 
     private void OnAttackLeft()
     {
-        var pos  = _myGame.HandleAttackInput(ConsoleKey.D);
+        var pos = _myGame.HandleAttackInput(ConsoleKey.D);
         TryPlayParticle(pos);
     }
 
@@ -73,7 +77,7 @@ public class PlayerController : MonoBehaviour
 
     private void TryPlayParticle(rogueLike.Vector2 pos)
     {
-        if(pos != rogueLike.Vector2.Zero)
+        if (pos != rogueLike.Vector2.Zero)
         {
             _attackParticle.transform.position = new Vector3(pos.X, 0, pos.Y);
             _attackParticle.Play();
