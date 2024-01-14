@@ -8,9 +8,7 @@ namespace rogueLike.GameObjects
     {
         protected int moveCooldown = 30;
         protected int attackCooldown = 30;
-        public int LastMovedFrame = 0;
-        public int LastAttackFrame = 0;
-
+        public int LastActionFrame = 0;
         public int MoveCooldown { get => moveCooldown; }
         public int AttackCooldown { get => attackCooldown; }
 
@@ -22,59 +20,46 @@ namespace rogueLike.GameObjects
 
         internal void Move(Direction direct, World myWorld, float frameCount)
         {
-            Vector2 movedPos;
-
-            if (Vector2.FromDirection.TryGetValue(direct, out movedPos))
+            if (frameCount - LastActionFrame > MoveCooldown)
             {
-                movedPos = GetPos() + Vector2.FromDirection[direct];
+                var movedPos = Position + Vector2.GetFromDirection(direct);
+                TryToWalk(movedPos, myWorld, frameCount);
             }
-            else
-            {
-                movedPos = Vector2.Zero;
-            }
-
-            TryToWalk(movedPos, myWorld);
-
-            LastMovedFrame = (int)frameCount;
         }
 
-        public void TryToWalk(Vector2 movedPos, World myWorld)
+        public void TryToWalk(Vector2 movedPos, World myWorld, float frameCount)
         {
-            if (myWorld.IsPosWalkable(movedPos))
+            if (myWorld.IsPosWalkable(movedPos) && myWorld.GetGameObjectGrid()[Position.X, Position.Y] is Creature entity)
             {
-                Creature entity = myWorld.GetGameObjectGrid()[Position.X, Position.Y] as Creature;
-                myWorld.SetObject(GetPos(), myWorld.GetElementAt(GetPos()));
+                myWorld.SetObject(Position, myWorld.GetElementAt(Position));
                 SetPos(movedPos);
-
-                if (entity != null)
-                myWorld.SetObject(GetPos(), entity);
+                LastActionFrame = (int)frameCount;
+                myWorld.SetObject(Position, entity);
             }
         }
 
-        internal virtual Vector2 Attack(Direction direct, World myWorld)
+        internal virtual Vector2 Attack(Direction direct, World myWorld, float frameCount)
         {
             Vector2 attackPos;
 
-            if(Vector2.FromDirection.TryGetValue(direct, out attackPos))
+            attackPos = Position + Vector2.FromDirection[direct];
+
+            if (!World.CompareObjects(myWorld.GetElementAt(attackPos), new Wall())
+                && frameCount - LastActionFrame > AttackCooldown)
             {
-                attackPos = GetPos() + Vector2.FromDirection[direct];
+                LastActionFrame = (int)frameCount;
+                TryToHit(attackPos, myWorld);
+                return attackPos;
             }
             else
-            {
-                attackPos = Vector2.Zero;
-            }
-
-            TryToHit(attackPos, myWorld);
-
-            return attackPos;
+                return Vector2.Zero;
         }
 
         public void TryToHit(Vector2 attackPos, World myWorld)
         {
             GameObject objectAt = myWorld.GetGameObjectGrid()[attackPos.X, attackPos.Y];
-            Creature attackedObj = objectAt as Creature;
 
-            if (attackedObj != null)
+            if (objectAt is Creature attackedObj)
             {
                 attackedObj.Dead(myWorld);
             }

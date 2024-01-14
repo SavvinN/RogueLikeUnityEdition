@@ -16,8 +16,7 @@ namespace rogueLike.GameObjects
         protected bool Walkable { get; set; }
         public bool IsWalkable { get => Walkable; }
         public Vector2 Position { get => _position; }
-        public Vector2 GetPos() => _position;
-        public void SetPos(Vector2 pos) => _position = pos;
+        internal void SetPos(Vector2 pos) => _position = pos;
         public char GetSymbol() => _symbol;
         protected void SetSymbol(char chr) => _symbol = chr;
 

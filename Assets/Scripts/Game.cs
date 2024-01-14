@@ -9,14 +9,13 @@ namespace rogueLike
 {
     public class Game
     {
-        System.Numerics.Vector2 position;
-
         public int level = 1,
                     life = 3;
         public float frameCount = 0;
-        private World myWorld;
+        private readonly World myWorld;
         public bool GameStatus { get; set; }
         public World MyWorld { get => myWorld; }
+
         public Game()
         {
             myWorld = new World(level);
@@ -37,7 +36,7 @@ namespace rogueLike
 
         public bool IsGameOver => GameStatus = life <= 0;
 
-        public bool IsPlayerDead() 
+        public bool IsPlayerDead()
         {
             if (myWorld.GetPlayer().Position == Vector2.Zero)
             {
@@ -46,11 +45,11 @@ namespace rogueLike
             }
             else
                 return false;
-        } 
+        }
 
         public bool PlayerOnExit()
         {
-            GameObject elementAtPlayerPos = myWorld.GetElementAt(myWorld.GetPlayer().GetPos());
+            GameObject elementAtPlayerPos = myWorld.GetElementAt(myWorld.GetPlayer().Position);
             if (World.CompareObjects(elementAtPlayerPos, new ExitDoor()))
             {
                 LevelUp();
@@ -69,56 +68,43 @@ namespace rogueLike
         public void HandleMoveInput(ConsoleKey key)
         {
             var currentPlayer = myWorld.GetPlayer();
-
-            if (frameCount - currentPlayer.LastMovedFrame > currentPlayer.MoveCooldown)
+            Dictionary<ConsoleKey, Direction> MoveDirections = new()
             {
-                var temp = currentPlayer.Position;
+                {ConsoleKey.UpArrow , Direction.Up},
+                {ConsoleKey.DownArrow , Direction.Down},
+                {ConsoleKey.RightArrow , Direction.Right},
+                {ConsoleKey.LeftArrow , Direction.Left}
+            };
 
-                switch (key)
-                {
-                    case ConsoleKey.UpArrow:
-                        currentPlayer.Move(Direction.Up, myWorld, frameCount);
-                        break;
-                    case ConsoleKey.DownArrow:
-                        currentPlayer.Move(Direction.Down, myWorld, frameCount);
-                        break;
-                    case ConsoleKey.RightArrow:
-                        currentPlayer.Move(Direction.Right, myWorld, frameCount);
-                        break;
-                    case ConsoleKey.LeftArrow:
-                        currentPlayer.Move(Direction.Left, myWorld, frameCount);
-                        break;
-                }
-
-                if (temp != currentPlayer.Position)
-                    currentPlayer.LastMovedFrame = (int)frameCount;
-            }
+            if (MoveDirections.TryGetValue(key, out _))
+            {
+                currentPlayer.Move(MoveDirections[key], myWorld, frameCount);
+            } 
         }
 
         public Vector2 HandleAttackInput(ConsoleKey key)
         {
             var currentPlayer = myWorld.GetPlayer();
-            Vector2 attackPos = Vector2.Zero;
+            Vector2 attackPos;
 
-            if (frameCount - currentPlayer.LastAttackFrame > currentPlayer.AttackCooldown)
+            Dictionary<ConsoleKey, Direction> AttackDirections = new()
             {
-                switch (key)
-                {
-                    case ConsoleKey.W:
-                        attackPos = currentPlayer.Attack(Direction.Up, myWorld);
-                        break;
-                    case ConsoleKey.S:
-                        attackPos = currentPlayer.Attack(Direction.Down, myWorld);
-                        break;
-                    case ConsoleKey.D:
-                        attackPos = currentPlayer.Attack(Direction.Right, myWorld);
-                        break;
-                    case ConsoleKey.A:
-                        attackPos = currentPlayer.Attack(Direction.Left, myWorld);
-                        break;
-                }
-                currentPlayer.LastAttackFrame = (int)frameCount;
+                {ConsoleKey.W , Direction.Up},
+                {ConsoleKey.S , Direction.Down},
+                {ConsoleKey.D , Direction.Right},
+                {ConsoleKey.A , Direction.Left}
+            };
+
+            if(AttackDirections.TryGetValue(key, out Direction value))
+            {
+                currentPlayer.Attack(value, myWorld, frameCount);
+                attackPos = currentPlayer.Position + Vector2.FromDirection[value];
             }
+            else
+            {
+                attackPos = Vector2.Zero;
+            }
+
             return attackPos;
         }
 
@@ -134,11 +120,11 @@ namespace rogueLike
             foreach (var archer in archs)
             {
                 archer.FindPlayer(myWorld.GetPlayer().Position, myWorld.GetGameObjectGrid());
-                if(!(myWorld.GetPlayer().Position == archer.Position))
-                EnemyMovement(archer);
+                if (!(myWorld.GetPlayer().Position == archer.Position))
+                    EnemyMovement(archer);
 
-                if(EnemyObsPlayer(archer) != Direction.None)
-                RangeEnemyAttackment(archer);
+                if (EnemyObsPlayer(archer) != Direction.None)
+                    RangeEnemyAttackment(archer);
             }
         }
 
@@ -148,53 +134,27 @@ namespace rogueLike
 
             foreach (var arrow in arrows)
             {
-                if (arrow.Position != Vector2.Zero && frameCount - arrow.LastMovedFrame > arrow.velocity)
-                {
-                    arrow.Move(myWorld);
-                    arrow.LastMovedFrame = (int)frameCount;
-                }
+               arrow.Move(myWorld, frameCount);
             }
 
             if (arrows is not null)
                 for (int i = 0; i < arrows.Count; i++)
                 {
                     if (arrows[i].Position == Vector2.Zero)
-                        myWorld.RemoveArrow(arrows[i]);
+                    myWorld.RemoveArrow(arrows[i]);
                 }
         }
 
-        public Direction EnemyObsPlayer(Enemy enemy)
-        {
-            var nextStep = enemy.GetNextStep(myWorld.GetPlayer().Position) - enemy.Position;
+        public Direction EnemyObsPlayer(Enemy enemy) => Vector2.GetToDirection(enemy.GetNextStep() - enemy.Position);
 
-            if(Vector2.ToDirection.TryGetValue(nextStep, out Direction direction))
-            {
-                return direction;
-            }
-            else
-            {
-                enemy.Patrol(myWorld, frameCount);
-                return Direction.None;
-            }
-        }
-
-        public void EnemyMovement(Enemy enemy)
-        {
-            var direct = EnemyObsPlayer(enemy);
-
-            if (frameCount - enemy.LastMovedFrame > enemy.MoveCooldown)
-            {
-                enemy.Move(direct, myWorld, frameCount);  
-            }
-        }
-
+        public void EnemyMovement(Enemy enemy) => enemy.Move(EnemyObsPlayer(enemy), myWorld, frameCount);
 
         private void RangeEnemyAttackment(Archer archer)
         {
             var direct = Direction.None;
             var playerPos = myWorld.GetPlayer().Position;
-            
-            if(archer.Position.X > playerPos.X && archer.Position.Y == playerPos.Y)
+
+            if (archer.Position.X > playerPos.X && archer.Position.Y == playerPos.Y)
                 direct = Direction.Up;
             else
             if (archer.Position.X < playerPos.X && archer.Position.Y == playerPos.Y)
@@ -206,28 +166,22 @@ namespace rogueLike
             if (archer.Position.Y > playerPos.Y && archer.Position.X == playerPos.X)
                 direct = Direction.Left;
 
-            if (frameCount - archer.LastAttackFrame > archer.AttackCooldown)
+            if (frameCount - archer.LastFireFrame > archer.AttackCooldown)
             {
-                var Arrow = new Arrow(archer.GetPos(), direct);
+                var Arrow = new Arrow(archer.Position, direct);
                 myWorld.AddArrow(Arrow);
-                archer.LastAttackFrame = (int)frameCount;
+                archer.LastFireFrame = (int)frameCount;
             }
         }
 
         public void MeleeEnemyAttackment(Enemy enemy)
         {
             var playerPos = myWorld.GetPlayer().Position;
-            var attackPos = Vector2.Zero;
 
-            if (frameCount - enemy.LastMovedFrame > enemy.AttackCooldown)
+            foreach (var direct in Vector2.ToDirection)
             {
-                foreach (var direct in Vector2.ToDirection)
-                {
-                    if (enemy.Position + direct.Key == playerPos)
-                        attackPos = enemy.Attack(direct.Value, myWorld);
-                }
-
-                enemy.LastMovedFrame = (int)frameCount;
+                if (enemy.Position + direct.Key == playerPos)
+                    enemy.Attack(direct.Value, myWorld, frameCount);
             }
         }
     }

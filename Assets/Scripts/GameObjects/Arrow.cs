@@ -6,7 +6,7 @@ namespace rogueLike.GameObjects
 {
     public class Arrow : GameObject
     {
-        private Direction _direction;
+        private readonly Direction _direction = Direction.None;
         private int _distance = 5;
         public int LastMovedFrame = 0;
         public int velocity = 30;
@@ -19,44 +19,31 @@ namespace rogueLike.GameObjects
             _direction = direction;
         }
 
-        public void Move(World myWorld)
+        public void Move(World myWorld, float frameCount)
         {
-
-            var movingPos = Vector2.Zero;
-
-            switch (_direction)
+            if (frameCount - LastMovedFrame > velocity)
             {
-                case Direction.Up:
-                    movingPos = (Position - Vector2.UnitX);
-                    break;
-                case Direction.Down:
-                    movingPos = (Position + Vector2.UnitX);
-                    break;
-                case Direction.Right:
-                    movingPos = (Position + Vector2.UnitY);
-                    break;
-                case Direction.Left:
-                    movingPos = (Position - Vector2.UnitY);
-                    break;
-            }
+                var movingPos = Vector2.GetFromDirection(_direction);
+                movingPos = Position + movingPos;
+                LastMovedFrame = (int)frameCount;
 
-            if (!World.CompareObjects(myWorld.GetElementAt(movingPos), new Wall())
+                if (!World.CompareObjects(myWorld.GetElementAt(movingPos), new Wall())
                 && !(_distance < 0))
-            {
-                SetPos(movingPos);
-                TryToHit(GetPos(), myWorld);
-                _distance--;
+                {
+                    SetPos(movingPos);
+                    TryToHit(Position, myWorld);
+                    _distance--;
+                }
+                else
+                    RemoveArrow();
             }
-            else
-                RemoveArrow();
         }
 
         public void TryToHit(Vector2 attackPos, World myWorld)
         {
             GameObject objectAt = myWorld.GetGameObjectGrid()[attackPos.X, attackPos.Y];
-            Creature attackedObj = objectAt as Creature;
 
-            if (attackedObj != null && World.CompareObjects(attackedObj, myWorld.GetPlayer()))
+            if (objectAt is Creature attackedObj && World.CompareObjects(attackedObj, myWorld.GetPlayer()))
             {
                 attackedObj.Dead(myWorld);
             }

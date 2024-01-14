@@ -10,16 +10,16 @@ namespace rogueLike
 {
     public class World
     {
-        private Wall wall = new();
-        private Ground ground = new();
-        private Room room = new();
-        private ExitDoor exitDoor = new();
+        private readonly Wall wall = new();
+        private readonly Ground ground = new();
+        private readonly Room room = new();
+        private readonly ExitDoor exitDoor = new();
         private GameObject[,] _gameObjectsGrid;
         private GameObject[,] _gameObjGridCopy;
         private Player player;
         private Zombie[] zombie;
         private Archer[] archer;
-        private List<Arrow> arrow = new List<Arrow>();
+        private readonly List<Arrow> arrow = new();
         private List<Vector2> _enemySpawnMap;
         private List<Vector2> _itemSpawnMap;
         private char[,] _grid;
@@ -31,7 +31,7 @@ namespace rogueLike
         private int _level = 0,
                     enemyCount = 0;
         private Maze maze;
-        Random rnd = new Random();
+        readonly Random rnd = new();
         public World(int level)
         {
             GenerateMaze(level);
@@ -54,7 +54,7 @@ namespace rogueLike
             _gameObjGridCopy = new GameObject[Rows, Cols];
             CreateExitDoor();
             worldFrame = CreateWorldFrame();
-            constructObjectsGrid();
+            ConstructObjectsGrid();
             for (int y = 0; y < Rows; y++)
                 for (int x = 0; x < Cols; x++)
                 {
@@ -74,9 +74,9 @@ namespace rogueLike
 
         internal List<Arrow> GetAllArrows() => arrow;
 
-        private void constructObjectsGrid()
+        private void ConstructObjectsGrid()
         {
-            Dictionary<char, GameObject> symbolObjectDictionary = new Dictionary<char, GameObject>()
+            Dictionary<char, GameObject> symbolObjectDictionary = new()
             {
                 { wall.GetSymbol(), wall},
                 { ground.GetSymbol(), ground},
@@ -123,18 +123,18 @@ namespace rogueLike
             for (int i = 0; i < zombie.Length; i++)
             {
                 zombie[i] = new Zombie(_enemySpawnMap[rnd.Next(0, _enemySpawnMap.Count - 1)]);
-                _gameObjectsGrid[zombie[i].GetPos().X, zombie[i].GetPos().Y] = zombie[i];
+                _gameObjectsGrid[zombie[i].Position.X, zombie[i].Position.Y] = zombie[i];
             }
             for (int i = 0; i < archer.Length; i++)
             {
                 archer[i] = new Archer(_enemySpawnMap[rnd.Next(0, _enemySpawnMap.Count - 1)]);
-                _gameObjectsGrid[archer[i].GetPos().X, archer[i].GetPos().Y] = archer[i];
+                _gameObjectsGrid[archer[i].Position.X, archer[i].Position.Y] = archer[i];
             }
         }
 
         private void SpawnPlayer()
         {
-            if (exitDoor.GetPos().Y > Cols / 2)
+            if (exitDoor.Position.Y > Cols / 2)
             {
                 player = _gameObjectsGrid[1, 1] == wall
                        ? new Player(new Vector2(2, 1))
@@ -152,7 +152,7 @@ namespace rogueLike
 
         public List<Vector2> GenerateItemSpawnMap()
         {
-            List<Vector2> spawnMap = new List<Vector2>();
+            List<Vector2> spawnMap = new();
             Vector2[] Dir = new Vector2[4]
             {
                 -Vector2.UnitX,
@@ -184,7 +184,7 @@ namespace rogueLike
 
         private List<Vector2> GenerateEnemySpawnMap()
         {
-            List<Vector2> spawnMap = new List<Vector2>();
+            List<Vector2> spawnMap = new();
             for (int y = 2; y < Rows - 1; y++)
             {
                 for (int x = 2; x < Cols - 1; x++)
@@ -225,24 +225,29 @@ namespace rogueLike
         }
 
         internal static bool CompareObjects(GameObject obj1, GameObject obj2) => obj1.GetType().Equals(obj2.GetType());
-        public bool IsPosWalkable(Vector2 pos) => 
-            (pos.Y >= 0 && pos.X >= 0) && (pos.Y < sizeX && pos.X < sizeY)
-            ? _gameObjectsGrid[pos.X, pos.Y].IsWalkable 
-            : false;
+        public bool IsPosWalkable(Vector2 pos) =>
+            (pos.Y >= 0 && pos.X >= 0) 
+            && (pos.Y < sizeX && pos.X < sizeY)
+            && _gameObjectsGrid[pos.X, pos.Y].IsWalkable;
 
         internal GameObject GetElementAt(Vector2 Pos) => _gameObjGridCopy[Pos.X, Pos.Y];
         internal List<Creature> GetAllCreatures()
         {
-            var list = new List<Creature>();
-            list.Add(player);
+            var list = new List<Creature>
+            {
+                player
+            };
+
             foreach (var z in zombie)
             {
                 list.Add(z);
             }
+
             foreach (var a in archer)
             {
                 list.Add(a);
             }
+
             return list;
         }
         internal Player GetPlayer() => player;

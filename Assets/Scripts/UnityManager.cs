@@ -13,7 +13,7 @@ public class UnityManager : MonoBehaviour
     private Game currentGame;
     private rogueLike.GameObjects.GameObject[,] gridToRender;
     public World myWorld;
-    private int _entityHeight = 0;
+    private readonly int _entityHeight = 0;
     private UnityEngine.GameObject _currentPlayer;
     private UnityEngine.GameObject[] _zombies;
     private UnityEngine.GameObject[] _archers;

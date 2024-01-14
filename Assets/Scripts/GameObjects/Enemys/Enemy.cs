@@ -2,15 +2,18 @@
 using System.Numerics;
 using System.Collections.Generic;
 using System;
+using System.Linq;
 
 namespace rogueLike.GameObjects.Enemys
 {
     public class Enemy : Creature
     {
         private int viewDistance = 6;
-        public List<Vector2> path = new List<Vector2>();
+        private Vector2 lastPlayerPos;
+        private bool seeThePlayer = true;
+        public List<Vector2> path = new();
 
-        public Enemy(Vector2 spawnPos)
+        public Enemy()
         {
             Walkable = false;
         }
@@ -19,32 +22,31 @@ namespace rogueLike.GameObjects.Enemys
 
         public void Patrol(World myWorld, float frameCount)
         {
-            Random rand = new Random();
+            Random rand = new();
             int randomDirection = rand.Next(0, 4);
             Move((Direction)randomDirection, myWorld, frameCount);
         }
 
-        public bool FindPlayer(Vector2 playerPosition, GameObject[,] grid)
+        public void FindPlayer(Vector2 playerPosition, GameObject[,] grid)
         {
-            if (Vector2.Distance(GetPos(), playerPosition) < (float)viewDistance)
+            if (Vector2.Distance(Position, playerPosition) < (float)viewDistance)
             {
-                List<Vector2> seePath = GetPathTo(playerPosition);
+                List<Vector2> sawPath = GetPathTo(playerPosition);
 
-                foreach (var pos in seePath)
+                foreach (var pos in sawPath)
                 {
-                    if (World.CompareObjects(grid[(int)pos.X, (int)pos.Y], new Wall()))
-                        return false;
+                    seeThePlayer = !World.CompareObjects(grid[pos.X, pos.Y], new Wall()); 
+
+                    if(seeThePlayer) break;
                 }
-                path = GetPathTo(playerPosition);
-                return true;
+                path = seeThePlayer ? GetPathTo(playerPosition) : path;
             }
-            return false;
         }
 
         private List<Vector2> GetPathTo(Vector2 playerPosition)
         {
-            List<Vector2> path = new List<Vector2>();
-            Vector2 viewPoint = GetPos();
+            List<Vector2> path = new();
+            Vector2 viewPoint = Position;
             path.Add(viewPoint);
             while (viewPoint != playerPosition)
             {
@@ -66,11 +68,13 @@ namespace rogueLike.GameObjects.Enemys
             return path;
         }
 
-        public Vector2 GetNextStep(Vector2 playerPosition)
+        public Vector2 GetNextStep()
         {
             if (path.Count > 1)
             {
-                return path[1];
+                var nStep = path[1];
+                path.Remove(path.First());
+                return nStep;
             }
             else
                 return Position;
