@@ -168,9 +168,8 @@ public class UnityManager : MonoBehaviour
 
     public void UpdateEntityAction(Player player, Zombie[] zombies, Archer[] archers, List<Arrow> arrows)
     {
-        _currentPlayer.transform.position = Vector3.MoveTowards(_currentPlayer.transform.position,
-                new Vector3(player.Position.X, _entityHeight, player.Position.Y),
-                Time.deltaTime * _playerVelocity);
+        
+        UpdateMovingObject(_currentPlayer, player, _entityHeight, _playerVelocity);
 
         Camera.transform.position = Vector3.Lerp(Camera.transform.position,
             _currentPlayer.transform.position + new Vector3(0, _cameraHeight, 0),
@@ -185,10 +184,18 @@ public class UnityManager : MonoBehaviour
     {
         for (int i = 0; i < enemy.Length; i++)
         {
-            enemyPrefabs[i].transform.position = Vector3.MoveTowards(enemyPrefabs[i].transform.position,
-                new Vector3(enemy[i].Position.X, _entityHeight, enemy[i].Position.Y),
-                Time.deltaTime * _enemyVelocity);
+            UpdateMovingObject(enemyPrefabs[i], enemy[i], _entityHeight, _enemyVelocity);
         }
+    }
+
+    public void UpdateMovingObject(UnityEngine.GameObject uObject,
+                                   rogueLike.GameObjects.GameObject rObject,
+                                   float height,
+                                   float velocity)
+    {
+        uObject.transform.position = Vector3.MoveTowards(uObject.transform.position,
+                new Vector3(rObject.Position.X, height, rObject.Position.Y),
+                Time.deltaTime * velocity);
     }
 
     public void UpdateArrows(List<Arrow> arrows)
@@ -223,9 +230,7 @@ public class UnityManager : MonoBehaviour
     {
         for (int i = 0; i < _arrows.Count; i++)
         {
-            _arrows[i].mash.transform.position = Vector3.MoveTowards(_arrows[i].mash.transform.position,
-                new Vector3(_arrows[i].rArrow.Position.X, _entityHeight, _arrows[i].rArrow.Position.Y),
-                Time.deltaTime * _arrowVelocity);
+            UpdateMovingObject(_arrows[i].mash, _arrows[i].rArrow, _entityHeight, _arrowVelocity);
         }
     }
 
@@ -246,7 +251,7 @@ public class UnityManager : MonoBehaviour
         foreach (var arr in _arrows)
         {
             if (arrow == arr.rArrow)
-                return true;
+            return true;
         }
         return false;
     }

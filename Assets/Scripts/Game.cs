@@ -23,7 +23,6 @@ namespace rogueLike
 
         public void RegenerateLevel()
         {
-            life--;
             myWorld.GenerateMaze(level);
             myWorld.GetAllArrows().Clear();
         }
@@ -39,6 +38,7 @@ namespace rogueLike
         {
             if (myWorld.GetPlayer().Position == Vector2.Zero)
             {
+                life--;
                 RegenerateLevel();
                 return true;
             }
@@ -118,11 +118,11 @@ namespace rogueLike
             {
                 enemy.FindPlayer(myWorld.GetPlayer().Position, myWorld.GetGameObjectGrid());
 
-                var PlayerDirect = enemy.GetDirectionToPlayer();
+                var DetectedPlayerDirect = enemy.GetDirectionToPlayer();
 
-                if (PlayerDirect != Direction.None)
+                if (DetectedPlayerDirect != Direction.None)
                 {
-                    enemy.EnemyMovement(myWorld, PlayerDirect, frameCount);
+                    enemy.EnemyMovement(myWorld, DetectedPlayerDirect, frameCount);
                     enemy.EnemyAttackment(myWorld, frameCount);
                 }
                 else
